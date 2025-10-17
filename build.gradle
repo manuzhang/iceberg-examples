@@ -3,7 +3,7 @@ plugins {
     id 'application'
 }
 
-group = 'com.example'
+group = 'io.github.manuzhang'
 version = '1.0.0-SNAPSHOT'
 
 java {
@@ -29,21 +29,21 @@ dependencies {
 }
 
 application {
-    mainClass = 'com.example.iceberg.IcebergExamples'
+    mainClass = 'io.github.manuzhang.iceberg.examples.IcebergExamples'
 }
 
 // Additional tasks to run specific examples
 task runDataOperations(type: JavaExec) {
     group = 'examples'
     description = 'Run the Data Operations example'
-    mainClass = 'com.example.iceberg.DataOperationsExample'
+    mainClass = 'io.github.manuzhang.iceberg.examples.DataOperationsExample'
     classpath = sourceSets.main.runtimeClasspath
 }
 
 task runSchemaEvolution(type: JavaExec) {
     group = 'examples'
     description = 'Run the Schema Evolution example'
-    mainClass = 'com.example.iceberg.SchemaEvolutionExample'
+    mainClass = 'io.github.manuzhang.iceberg.examples.SchemaEvolutionExample'
     classpath = sourceSets.main.runtimeClasspath
 }
 

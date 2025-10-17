@@ -1,4 +1,4 @@
-package com.example.iceberg;
+package io.github.manuzhang.iceberg.examples;
 
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;

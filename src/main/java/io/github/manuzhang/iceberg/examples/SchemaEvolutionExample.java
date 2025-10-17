@@ -1,4 +1,4 @@
-package com.example.iceberg;
+package io.github.manuzhang.iceberg.examples;
 
 import org.apache.iceberg.Schema;
 import org.apache.iceberg.types.Types;
