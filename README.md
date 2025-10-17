@@ -36,7 +36,7 @@ Run specific example classes:
 # Data operations example
 ./gradlew runDataOperations
 
-# Schema evolution example  
+# Schema evolution example
 ./gradlew runSchemaEvolution
 ```
 
@@ -102,7 +102,7 @@ These examples demonstrate Iceberg's core schema and data APIs. For complete tab
 
 ### Adding Catalog Support
 - **Hadoop Catalog**: For HDFS or local filesystem
-- **Hive Metastore**: For integration with existing Hive setups  
+- **Hive Metastore**: For integration with existing Hive setups
 - **REST Catalog**: For modern cloud-native deployments
 - **JDBC Catalog**: For SQL-based metadata storage
 
@@ -114,7 +114,7 @@ These examples demonstrate Iceberg's core schema and data APIs. For complete tab
 ### Storage Integration
 - **HDFS**: For on-premises Hadoop clusters
 - **Amazon S3**: For AWS environments
-- **Azure Data Lake Storage**: For Azure environments  
+- **Azure Data Lake Storage**: For Azure environments
 - **Google Cloud Storage**: For GCP environments
 
 ## Learning Resources
@@ -128,7 +128,7 @@ These examples demonstrate Iceberg's core schema and data APIs. For complete tab
 **Scope of Examples**: These examples focus on demonstrating Iceberg's schema and data type APIs without requiring external infrastructure. They are educational examples showing:
 - How to define and work with schemas
 - Iceberg's rich type system
-- Schema evolution concepts and rules  
+- Schema evolution concepts and rules
 - Record creation and manipulation
 
 **For Production Use**: To build complete Iceberg applications, you'll need to add:

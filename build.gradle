@@ -1,6 +1,7 @@
 plugins {
     id 'java'
     id 'application'
+    id 'com.diffplug.spotless' version '6.23.3'
 }
 
 group = 'io.github.manuzhang'
@@ -19,10 +20,10 @@ dependencies {
     // Apache Iceberg core dependencies
     implementation 'org.apache.iceberg:iceberg-api:1.10.0'
     implementation 'org.apache.iceberg:iceberg-core:1.10.0'
-    
+
     // Logging
     implementation 'org.slf4j:slf4j-simple:2.0.9'
-    
+
     // Testing
     testImplementation 'org.junit.jupiter:junit-jupiter:5.10.0'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
@@ -53,4 +54,33 @@ test {
 
 tasks.withType(JavaCompile) {
     options.encoding = 'UTF-8'
+}
+
+// Spotless configuration for code formatting
+spotless {
+    java {
+        target 'src/**/*.java'
+
+        // Use Google Java Format with AOSP style (uses 4 spaces for indentation)
+        googleJavaFormat().aosp().reflowLongStrings()
+
+        // Remove unused imports
+        removeUnusedImports()
+
+        // Ensure files end with newline
+        endWithNewline()
+
+        // Trim trailing whitespace
+        trimTrailingWhitespace()
+
+        // Format imports in specific order
+        importOrder('java', 'javax', '', 'org.apache.iceberg', 'org.slf4j')
+    }
+
+    format 'misc', {
+        target '*.gradle', '*.md', '.gitignore'
+
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
 }
