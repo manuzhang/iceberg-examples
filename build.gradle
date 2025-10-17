@@ -61,8 +61,8 @@ spotless {
     java {
         target 'src/**/*.java'
 
-        // Use Google Java Format with AOSP style (uses 4 spaces for indentation)
-        googleJavaFormat().aosp().reflowLongStrings()
+        // Use Eclipse formatter with 2-space indentation
+        eclipse().configFile('spotless.xml')
 
         // Remove unused imports
         removeUnusedImports()
