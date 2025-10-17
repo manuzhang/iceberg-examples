@@ -4,7 +4,7 @@ plugins {
 }
 
 group = 'com.example'
-version = '1.0.0'
+version = '1.0.0-SNAPSHOT'
 
 java {
     sourceCompatibility = JavaVersion.VERSION_11
@@ -17,8 +17,8 @@ repositories {
 
 dependencies {
     // Apache Iceberg core dependencies
-    implementation 'org.apache.iceberg:iceberg-api:1.4.0'
-    implementation 'org.apache.iceberg:iceberg-core:1.4.0'
+    implementation 'org.apache.iceberg:iceberg-api:1.10.0'
+    implementation 'org.apache.iceberg:iceberg-core:1.10.0'
     
     // Logging
     implementation 'org.slf4j:slf4j-simple:2.0.9'
