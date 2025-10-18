@@ -61,15 +61,8 @@ spotless {
   java {
     target 'src/**/*.java'
 
-    // Use Google Java Format with AOSP style (4 spaces) then convert to 2 spaces
-    googleJavaFormat().aosp()
-
-    // Custom step to convert 4-space indentation to 2-space
-    custom 'twoSpaceIndent', { content ->
-      content.replaceAll('(?m)^(    )+') { match ->
-        '  ' * (match.size() / 4)
-      }
-    }
+    // Use Palantir Java Format (native 2-space indentation)
+    palantirJavaFormat()
 
     // Remove unused imports
     removeUnusedImports()
