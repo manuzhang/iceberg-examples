@@ -61,8 +61,15 @@ spotless {
   java {
       target 'src/**/*.java'
 
-      // Use Eclipse formatter with 2-space indentation
-      eclipse().configFile('spotless.xml')
+      // Use Google Java Format with AOSP style (4 spaces) then convert to 2 spaces
+      googleJavaFormat().aosp()
+
+      // Custom step to convert 4-space indentation to 2-space
+      custom 'twoSpaceIndent', { content ->
+        content.replaceAll('(?m)^(    )+') { match ->
+          '  ' * (match.size() / 4)
+        }
+      }
 
       // Remove unused imports
       removeUnusedImports()
@@ -73,8 +80,8 @@ spotless {
       // Trim trailing whitespace
       trimTrailingWhitespace()
 
-      // Format imports in specific order
-      importOrder('java', 'javax', '', 'org.apache.iceberg', 'org.slf4j')
+      // Format imports in alphabetic order
+      importOrder()
   }
 
   format 'misc', {
