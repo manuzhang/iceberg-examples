@@ -9,8 +9,8 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 
 /**
- * Unit tests for Iceberg examples. These tests demonstrate basic functionality
- * without requiring external dependencies.
+ * Unit tests for Iceberg examples. These tests demonstrate basic functionality without requiring
+ * external dependencies.
  */
 class IcebergExamplesTest {
 
@@ -25,9 +25,11 @@ class IcebergExamplesTest {
   @DisplayName("Test basic schema creation")
   void testSchemaCreation() {
     // Create a test schema
-    Schema schema = new Schema(Types.NestedField.required(1, "id", Types.LongType.get()),
-        Types.NestedField.required(2, "name", Types.StringType.get()),
-        Types.NestedField.optional(3, "age", Types.IntegerType.get()));
+    Schema schema =
+        new Schema(
+            Types.NestedField.required(1, "id", Types.LongType.get()),
+            Types.NestedField.required(2, "name", Types.StringType.get()),
+            Types.NestedField.optional(3, "age", Types.IntegerType.get()));
 
     // Verify schema properties
     assertNotNull(schema);
@@ -42,11 +44,13 @@ class IcebergExamplesTest {
   @Test
   @DisplayName("Test schema field types")
   void testSchemaFieldTypes() {
-    Schema schema = new Schema(Types.NestedField.required(1, "id", Types.LongType.get()),
-        Types.NestedField.required(2, "name", Types.StringType.get()),
-        Types.NestedField.optional(3, "age", Types.IntegerType.get()),
-        Types.NestedField.optional(4, "active", Types.BooleanType.get()),
-        Types.NestedField.optional(5, "timestamp", Types.TimestampType.withZone()));
+    Schema schema =
+        new Schema(
+            Types.NestedField.required(1, "id", Types.LongType.get()),
+            Types.NestedField.required(2, "name", Types.StringType.get()),
+            Types.NestedField.optional(3, "age", Types.IntegerType.get()),
+            Types.NestedField.optional(4, "active", Types.BooleanType.get()),
+            Types.NestedField.optional(5, "timestamp", Types.TimestampType.withZone()));
 
     // Test field types
     assertEquals(Types.LongType.get(), schema.findType("id"));
@@ -60,15 +64,19 @@ class IcebergExamplesTest {
   @DisplayName("Test schema evolution concepts")
   void testSchemaEvolution() {
     // Initial schema
-    Schema v1Schema = new Schema(Types.NestedField.required(1, "id", Types.LongType.get()),
-        Types.NestedField.required(2, "name", Types.StringType.get()));
+    Schema v1Schema =
+        new Schema(
+            Types.NestedField.required(1, "id", Types.LongType.get()),
+            Types.NestedField.required(2, "name", Types.StringType.get()));
 
     // Evolved schema (conceptual - in practice this would be done through table
     // operations)
-    Schema v2Schema = new Schema(Types.NestedField.required(1, "id", Types.LongType.get()),
-        Types.NestedField.required(2, "name", Types.StringType.get()),
-        Types.NestedField.optional(3, "email", Types.StringType.get()),
-        Types.NestedField.optional(4, "created_at", Types.TimestampType.withZone()));
+    Schema v2Schema =
+        new Schema(
+            Types.NestedField.required(1, "id", Types.LongType.get()),
+            Types.NestedField.required(2, "name", Types.StringType.get()),
+            Types.NestedField.optional(3, "email", Types.StringType.get()),
+            Types.NestedField.optional(4, "created_at", Types.TimestampType.withZone()));
 
     // Verify evolution
     assertEquals(2, v1Schema.columns().size());
@@ -86,12 +94,15 @@ class IcebergExamplesTest {
   @Test
   @DisplayName("Test field ID uniqueness")
   void testFieldIdUniqueness() {
-    Schema schema = new Schema(Types.NestedField.required(1, "id", Types.LongType.get()),
-        Types.NestedField.required(2, "name", Types.StringType.get()),
-        Types.NestedField.optional(3, "age", Types.IntegerType.get()));
+    Schema schema =
+        new Schema(
+            Types.NestedField.required(1, "id", Types.LongType.get()),
+            Types.NestedField.required(2, "name", Types.StringType.get()),
+            Types.NestedField.optional(3, "age", Types.IntegerType.get()));
 
     // Verify all field IDs are unique
-    long distinctIds = schema.columns().stream().mapToInt(Types.NestedField::fieldId).distinct().count();
+    long distinctIds =
+        schema.columns().stream().mapToInt(Types.NestedField::fieldId).distinct().count();
 
     assertEquals(schema.columns().size(), distinctIds);
   }

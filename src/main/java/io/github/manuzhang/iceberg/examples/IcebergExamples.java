@@ -6,9 +6,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Main class demonstrating basic Apache Iceberg operations. This example shows
- * how to create tables, work with schemas, and interact with the Iceberg
- * catalog.
+ * Main class demonstrating basic Apache Iceberg operations. This example shows how to create
+ * tables, work with schemas, and interact with the Iceberg catalog.
  */
 public class IcebergExamples {
 
@@ -56,11 +55,15 @@ public class IcebergExamples {
     // Collection types
     LOG.info("Collection Types:");
     LOG.info("  List<String>: {}", Types.ListType.ofRequired(1, Types.StringType.get()));
-    LOG.info("  Map<String,Long>: {}", Types.MapType.ofRequired(1, 2, Types.StringType.get(), Types.LongType.get()));
+    LOG.info(
+        "  Map<String,Long>: {}",
+        Types.MapType.ofRequired(1, 2, Types.StringType.get(), Types.LongType.get()));
 
     // Struct type
-    Types.StructType structType = Types.StructType.of(Types.NestedField.required(1, "id", Types.LongType.get()),
-        Types.NestedField.optional(2, "name", Types.StringType.get()));
+    Types.StructType structType =
+        Types.StructType.of(
+            Types.NestedField.required(1, "id", Types.LongType.get()),
+            Types.NestedField.optional(2, "name", Types.StringType.get()));
     LOG.info("  Struct: {}", structType);
   }
 
@@ -69,24 +72,35 @@ public class IcebergExamples {
     LOG.info("=== Schema Operations ===");
 
     // Create a basic schema
-    Schema initialSchema = new Schema(Types.NestedField.required(1, "user_id", Types.LongType.get()),
-        Types.NestedField.required(2, "username", Types.StringType.get()));
+    Schema initialSchema =
+        new Schema(
+            Types.NestedField.required(1, "user_id", Types.LongType.get()),
+            Types.NestedField.required(2, "username", Types.StringType.get()));
 
     LOG.info("Initial schema: {}", initialSchema);
 
     // Demonstrate schema evolution (conceptual - would require table operations)
-    Schema evolvedSchema = new Schema(Types.NestedField.required(1, "user_id", Types.LongType.get()),
-        Types.NestedField.required(2, "username", Types.StringType.get()),
-        Types.NestedField.optional(3, "full_name", Types.StringType.get()),
-        Types.NestedField.optional(4, "last_login", Types.TimestampType.withZone()));
+    Schema evolvedSchema =
+        new Schema(
+            Types.NestedField.required(1, "user_id", Types.LongType.get()),
+            Types.NestedField.required(2, "username", Types.StringType.get()),
+            Types.NestedField.optional(3, "full_name", Types.StringType.get()),
+            Types.NestedField.optional(4, "last_login", Types.TimestampType.withZone()));
 
     LOG.info("Evolved schema: {}", evolvedSchema);
 
     // Show schema field details
     LOG.info("Schema fields:");
-    evolvedSchema.columns().forEach(column -> {
-      LOG.info("  Field: {} (ID: {}, Type: {}, Required: {})", column.name(), column.fieldId(), column.type(),
-          column.isRequired());
-    });
+    evolvedSchema
+        .columns()
+        .forEach(
+            column -> {
+              LOG.info(
+                  "  Field: {} (ID: {}, Type: {}, Required: {})",
+                  column.name(),
+                  column.fieldId(),
+                  column.type(),
+                  column.isRequired());
+            });
   }
 }

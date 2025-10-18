@@ -61,8 +61,7 @@ spotless {
   java {
     target 'src/**/*.java'
 
-    // Use Eclipse formatter with 2-space indentation
-    eclipse().configFile('eclipse-formatter-config.xml')
+    googleJavaFormat()
 
     // Remove unused imports
     removeUnusedImports()

@@ -11,8 +11,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Example demonstrating data write operations with Apache Iceberg. Shows how to
- * write records to Iceberg tables using the GenericRecord API.
+ * Example demonstrating data write operations with Apache Iceberg. Shows how to write records to
+ * Iceberg tables using the GenericRecord API.
  */
 public class DataOperationsExample {
 
@@ -49,7 +49,8 @@ public class DataOperationsExample {
 
   /** Creates a user schema for the example table. */
   private Schema createUserSchema() {
-    return new Schema(Types.NestedField.required(1, "id", Types.LongType.get()),
+    return new Schema(
+        Types.NestedField.required(1, "id", Types.LongType.get()),
         Types.NestedField.required(2, "name", Types.StringType.get()),
         Types.NestedField.optional(3, "email", Types.StringType.get()),
         Types.NestedField.optional(4, "age", Types.IntegerType.get()),
@@ -101,8 +102,14 @@ public class DataOperationsExample {
 
     for (int i = 0; i < records.size(); i++) {
       Record record = records.get(i);
-      LOG.info("  Record {}: ID={}, Name={}, Email={}, Age={}, Active={}", i + 1, record.getField("id"),
-          record.getField("name"), record.getField("email"), record.getField("age"), record.getField("active"));
+      LOG.info(
+          "  Record {}: ID={}, Name={}, Email={}, Age={}, Active={}",
+          i + 1,
+          record.getField("id"),
+          record.getField("name"),
+          record.getField("email"),
+          record.getField("age"),
+          record.getField("active"));
     }
 
     LOG.info("Record structure demonstration:");

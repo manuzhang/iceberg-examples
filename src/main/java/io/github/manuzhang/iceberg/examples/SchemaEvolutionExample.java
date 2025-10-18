@@ -6,9 +6,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Example demonstrating schema evolution capabilities in Apache Iceberg. Shows
- * how to safely evolve table schemas by adding, renaming, and modifying
- * columns.
+ * Example demonstrating schema evolution capabilities in Apache Iceberg. Shows how to safely evolve
+ * table schemas by adding, renaming, and modifying columns.
  */
 public class SchemaEvolutionExample {
 
@@ -44,7 +43,8 @@ public class SchemaEvolutionExample {
 
   /** Creates an initial schema for demonstration. */
   private Schema createInitialSchema() {
-    return new Schema(Types.NestedField.required(1, "id", Types.LongType.get()),
+    return new Schema(
+        Types.NestedField.required(1, "id", Types.LongType.get()),
         Types.NestedField.required(2, "name", Types.StringType.get()),
         Types.NestedField.optional(3, "age", Types.IntegerType.get()));
   }
@@ -54,13 +54,18 @@ public class SchemaEvolutionExample {
     LOG.info("=== Schema Addition Concepts ===");
 
     // Create an evolved schema (conceptual)
-    Schema evolvedSchema = new Schema(Types.NestedField.required(1, "id", Types.LongType.get()),
-        Types.NestedField.required(2, "name", Types.StringType.get()),
-        Types.NestedField.optional(3, "age", Types.IntegerType.get()),
-        // New fields added
-        Types.NestedField.optional(4, "email", Types.StringType.get()),
-        Types.NestedField.optional(5, "created_at", Types.TimestampType.withZone()), Types.NestedField.optional(6,
-            "metadata", Types.MapType.ofRequired(7, 8, Types.StringType.get(), Types.StringType.get())));
+    Schema evolvedSchema =
+        new Schema(
+            Types.NestedField.required(1, "id", Types.LongType.get()),
+            Types.NestedField.required(2, "name", Types.StringType.get()),
+            Types.NestedField.optional(3, "age", Types.IntegerType.get()),
+            // New fields added
+            Types.NestedField.optional(4, "email", Types.StringType.get()),
+            Types.NestedField.optional(5, "created_at", Types.TimestampType.withZone()),
+            Types.NestedField.optional(
+                6,
+                "metadata",
+                Types.MapType.ofRequired(7, 8, Types.StringType.get(), Types.StringType.get())));
 
     displaySchema(evolvedSchema, "Evolved Schema with New Fields");
 
@@ -73,12 +78,16 @@ public class SchemaEvolutionExample {
     LOG.info("=== Type Promotion Concepts ===");
 
     // Original schema with integer age
-    Schema originalSchema = new Schema(Types.NestedField.required(1, "id", Types.LongType.get()),
-        Types.NestedField.optional(2, "age", Types.IntegerType.get()));
+    Schema originalSchema =
+        new Schema(
+            Types.NestedField.required(1, "id", Types.LongType.get()),
+            Types.NestedField.optional(2, "age", Types.IntegerType.get()));
 
     // Promoted schema with long age (safe promotion)
-    Schema promotedSchema = new Schema(Types.NestedField.required(1, "id", Types.LongType.get()),
-        Types.NestedField.optional(2, "age", Types.LongType.get()));
+    Schema promotedSchema =
+        new Schema(
+            Types.NestedField.required(1, "id", Types.LongType.get()),
+            Types.NestedField.optional(2, "age", Types.LongType.get()));
 
     LOG.info("Original age field type: {}", originalSchema.findType("age"));
     LOG.info("Promoted age field type: {}", promotedSchema.findType("age"));
@@ -101,13 +110,21 @@ public class SchemaEvolutionExample {
     LOG.info("Schema ID: {}", schema.schemaId());
     LOG.info("Columns:");
 
-    schema.columns().forEach(column -> {
-      String requiredStatus = column.isRequired() ? "REQUIRED" : "OPTIONAL";
-      String docString = column.doc() != null ? " - " + column.doc() : "";
+    schema
+        .columns()
+        .forEach(
+            column -> {
+              String requiredStatus = column.isRequired() ? "REQUIRED" : "OPTIONAL";
+              String docString = column.doc() != null ? " - " + column.doc() : "";
 
-      LOG.info("  {} (ID: {}, Type: {}, Status: {}){}", column.name(), column.fieldId(), column.type(), requiredStatus,
-          docString);
-    });
+              LOG.info(
+                  "  {} (ID: {}, Type: {}, Status: {}){}",
+                  column.name(),
+                  column.fieldId(),
+                  column.type(),
+                  requiredStatus,
+                  docString);
+            });
 
     LOG.info("Total columns: {}", schema.columns().size());
   }
