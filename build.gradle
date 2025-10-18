@@ -59,35 +59,35 @@ tasks.withType(JavaCompile) {
 // Spotless configuration for code formatting
 spotless {
   java {
-      target 'src/**/*.java'
+    target 'src/**/*.java'
 
-      // Use Google Java Format with AOSP style (4 spaces) then convert to 2 spaces
-      googleJavaFormat().aosp()
+    // Use Google Java Format with AOSP style (4 spaces) then convert to 2 spaces
+    googleJavaFormat().aosp()
 
-      // Custom step to convert 4-space indentation to 2-space
-      custom 'twoSpaceIndent', { content ->
-        content.replaceAll('(?m)^(    )+') { match ->
-          '  ' * (match.size() / 4)
-        }
+    // Custom step to convert 4-space indentation to 2-space
+    custom 'twoSpaceIndent', { content ->
+      content.replaceAll('(?m)^(    )+') { match ->
+        '  ' * (match.size() / 4)
       }
+    }
 
-      // Remove unused imports
-      removeUnusedImports()
+    // Remove unused imports
+    removeUnusedImports()
 
-      // Ensure files end with newline
-      endWithNewline()
+    // Ensure files end with newline
+    endWithNewline()
 
-      // Trim trailing whitespace
-      trimTrailingWhitespace()
+    // Trim trailing whitespace
+    trimTrailingWhitespace()
 
-      // Format imports in alphabetic order
-      importOrder()
+    // Format imports in alphabetic order
+    importOrder()
   }
 
   format 'misc', {
-      target '*.gradle', '*.md', '.gitignore'
+    target '*.gradle', '*.md', '.gitignore'
 
-      trimTrailingWhitespace()
-      endWithNewline()
+    trimTrailingWhitespace()
+    endWithNewline()
   }
 }
