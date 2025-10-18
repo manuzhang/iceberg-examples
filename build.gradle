@@ -61,8 +61,8 @@ spotless {
   java {
     target 'src/**/*.java'
 
-    // Use Palantir Java Format (native 2-space indentation)
-    palantirJavaFormat()
+    // Use Eclipse formatter with 2-space indentation
+    eclipse().configFile('eclipse-formatter-config.xml')
 
     // Remove unused imports
     removeUnusedImports()
