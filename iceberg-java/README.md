@@ -77,31 +77,6 @@ Run specific example classes:
 - Default column values (initial default and write default)
 - Overview of Iceberg format version 3 additions
 
-## Project Structure
-
-```
-src/
-├── main/
-│   └── java/
-│       └── io/
-│           └── github/
-│               └── manuzhang/
-│                   └── iceberg/
-│                       └── examples/
-│                           ├── IcebergExamples.java           # Main examples class
-│                           ├── DataOperationsExample.java     # Data operations
-│                           ├── SchemaEvolutionExample.java    # Schema evolution
-│                           └── TableFormatV3Example.java      # Table format v3
-└── test/
-    └── java/
-        └── io/
-            └── github/
-                └── manuzhang/
-                    └── iceberg/
-                        └── examples/
-                            └── IcebergExamplesTest.java        # Unit tests
-```
-
 ## Key Dependencies
 
 - **Apache Iceberg Core**: Table format and core API functionality
