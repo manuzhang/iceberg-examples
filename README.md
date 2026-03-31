@@ -21,6 +21,7 @@ Apache Iceberg is an open table format for huge analytic datasets. This project 
 ### Build the Project
 
 ```bash
+cd iceberg-java
 ./gradlew build
 ```
 
@@ -28,11 +29,14 @@ Apache Iceberg is an open table format for huge analytic datasets. This project 
 
 Run the main examples class:
 ```bash
+cd iceberg-java
 ./gradlew run
 ```
 
 Run specific example classes:
 ```bash
+cd iceberg-java
+
 # Data operations example
 ./gradlew runDataOperations
 
@@ -46,6 +50,7 @@ Run specific example classes:
 ### Run Tests
 
 ```bash
+cd iceberg-java
 ./gradlew test
 ```
 
@@ -80,21 +85,31 @@ Run specific example classes:
 ## Project Structure
 
 ```
-src/
-├── main/
-│   └── java/
-│       └── com/
-│           └── example/
-│               └── iceberg/
-│                   ├── IcebergExamples.java           # Main examples class
-│                   ├── DataOperationsExample.java     # Data operations
-│                   └── SchemaEvolutionExample.java    # Schema evolution
-└── test/
-    └── java/
-        └── com/
-            └── example/
-                └── iceberg/
-                    └── IcebergExamplesTest.java        # Unit tests
+iceberg-java/
+├── src/
+│   ├── main/
+│   │   └── java/
+│   │       └── io/
+│   │           └── github/
+│   │               └── manuzhang/
+│   │                   └── iceberg/
+│   │                       └── examples/
+│   │                           ├── IcebergExamples.java           # Main examples class
+│   │                           ├── DataOperationsExample.java     # Data operations
+│   │                           ├── SchemaEvolutionExample.java    # Schema evolution
+│   │                           └── TableFormatV3Example.java      # Table format v3
+│   └── test/
+│       └── java/
+│           └── io/
+│               └── github/
+│                   └── manuzhang/
+│                       └── iceberg/
+│                           └── examples/
+│                               └── IcebergExamplesTest.java        # Unit tests
+└── build.gradle
+iceberg-rust/
+└── src/
+    └── ...
 ```
 
 ## Key Dependencies

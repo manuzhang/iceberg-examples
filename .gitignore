@@ -27,8 +27,8 @@ Thumbs.db
 *.rar
 
 # But include gradle wrapper
-!gradle/wrapper/gradle-wrapper.jar
-!gradle/wrapper/gradle-wrapper.properties
+!iceberg-java/gradle/wrapper/gradle-wrapper.jar
+!iceberg-java/gradle/wrapper/gradle-wrapper.properties
 
 # Log files
 *.log

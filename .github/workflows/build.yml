@@ -28,9 +28,10 @@ jobs:
       uses: gradle/gradle-build-action@v3
 
     - name: Make gradlew executable
-      run: chmod +x gradlew
+      run: chmod +x iceberg-java/gradlew
 
     - name: Build with Gradle
+      working-directory: iceberg-java
       run: ./gradlew build
 
     - name: Upload test reports
@@ -38,7 +39,7 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: test-reports-jdk${{ matrix.java }}
-        path: build/reports/tests/test/
+        path: iceberg-java/build/reports/tests/test/
 
   build-rust:
     runs-on: ubuntu-latest
