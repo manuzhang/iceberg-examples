@@ -1,45 +1,30 @@
 # Iceberg Examples
 
-A collection of examples demonstrating the Apache Iceberg API across multiple languages: Java and Rust.
+A collection of examples demonstrating the Apache Iceberg Java API for table format operations, schema evolution, and data management.
 
 ## Overview
 
-Apache Iceberg is an open table format for huge analytic datasets. This project provides practical examples in both Java and Rust covering:
+Apache Iceberg is an open table format for huge analytic datasets. This project provides practical examples of using Iceberg's Java API to:
 
 - Create and manage table catalogs
 - Define and evolve table schemas
 - Perform data operations
 - Understand Iceberg's core concepts
 
-## Languages
-
-| Language | Directory | Description |
-|----------|-----------|-------------|
-| Java | (root) | Java API examples using `iceberg-api` and `iceberg-core` |
-| Rust | [`iceberg-rust/`](iceberg-rust/) | Rust API examples using the [`iceberg`](https://crates.io/crates/iceberg) crate |
-
 ## Prerequisites
-
-### Java Examples
 
 - Java 11 or higher
 - Gradle 8.5 or higher (included via wrapper)
 
-### Rust Examples
-
-See [`iceberg-rust/README.md`](iceberg-rust/README.md) for Rust prerequisites and setup instructions.
-
 ## Getting Started
 
-### Java Examples
-
-#### Build the Project
+### Build the Project
 
 ```bash
 ./gradlew build
 ```
 
-#### Run Examples
+### Run Examples
 
 Run the main examples class:
 ```bash
@@ -55,76 +40,59 @@ Run specific example classes:
 ./gradlew runSchemaEvolution
 ```
 
-#### Run Tests
+### Run Tests
 
 ```bash
 ./gradlew test
 ```
 
-### Rust Examples
-
-See [`iceberg-rust/README.md`](iceberg-rust/README.md) for build, run, and test instructions.
-
 ## Examples Included
 
-### Java Examples
-
-#### 1. Basic Iceberg Operations (`IcebergExamples.java`)
+### 1. Basic Iceberg Operations (`IcebergExamples.java`)
 - Schema definition and creation
 - Iceberg data type examples
 - Schema field inspection
 - Understanding schema structure and properties
 
-#### 2. Data Operations (`DataOperationsExample.java`)
+### 2. Data Operations (`DataOperationsExample.java`)
 - Creating sample records
 - Working with GenericRecord API
 - Understanding data writing concepts
 - Table information display
 
-#### 3. Schema Evolution (`SchemaEvolutionExample.java`)
+### 3. Schema Evolution (`SchemaEvolutionExample.java`)
 - Adding new columns
 - Renaming existing columns
 - Updating column types (safe operations)
 - Deleting columns
 - Schema compatibility rules
 
-### Rust Examples
-
-See [`iceberg-rust/README.md`](iceberg-rust/README.md) for a full description of each example.
-
 ## Project Structure
 
 ```
-├── src/                              # Java source
-│   ├── main/
-│   │   └── java/
-│   │       └── com/
-│   │           └── example/
-│   │               └── iceberg/
-│   │                   ├── IcebergExamples.java           # Main examples class
-│   │                   ├── DataOperationsExample.java     # Data operations
-│   │                   └── SchemaEvolutionExample.java    # Schema evolution
-│   └── test/
-│       └── java/
-│           └── com/
-│               └── example/
-│                   └── iceberg/
-│                       └── IcebergExamplesTest.java        # Unit tests
-└── iceberg-rust/                     # Rust examples (see iceberg-rust/README.md)
+src/
+├── main/
+│   └── java/
+│       └── com/
+│           └── example/
+│               └── iceberg/
+│                   ├── IcebergExamples.java           # Main examples class
+│                   ├── DataOperationsExample.java     # Data operations
+│                   └── SchemaEvolutionExample.java    # Schema evolution
+└── test/
+    └── java/
+        └── com/
+            └── example/
+                └── iceberg/
+                    └── IcebergExamplesTest.java        # Unit tests
 ```
 
 ## Key Dependencies
-
-### Java
 
 - **Apache Iceberg Core**: Table format and core API functionality
 - **Apache Iceberg API**: Public API interfaces and types
 - **SLF4J**: Logging framework
 - **JUnit 5**: Testing framework
-
-### Rust
-
-See [`iceberg-rust/README.md`](iceberg-rust/README.md).
 
 Note: These examples focus on demonstrating Iceberg's schema and data type APIs. For production table operations, you would typically add catalog implementations (Hadoop, Hive, REST, etc.) and file format dependencies (Parquet, ORC, etc.).
 
