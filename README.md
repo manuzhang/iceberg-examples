@@ -10,42 +10,6 @@ multiple languages.
 | [`iceberg-java/`](iceberg-java/) | Java | Examples using the Apache Iceberg Java API |
 | [`iceberg-rust/`](iceberg-rust/) | Rust | Examples using the Apache Iceberg Rust API |
 
-## iceberg-java
-
-Examples demonstrating the Apache Iceberg Java API for table format operations, schema evolution,
-and data management. See [iceberg-java/README.md](iceberg-java/README.md) for details.
-
-### Prerequisites
-
-- Java 11 or higher
-- Gradle 8.5 or higher (included via wrapper)
-
-### Quick Start
-
-```bash
-cd iceberg-java
-./gradlew build
-./gradlew run
-```
-
-## iceberg-rust
-
-Examples demonstrating the [Apache Iceberg Rust API](https://crates.io/crates/iceberg) for schema
-definition, data types, schema evolution, and catalog management. See
-[iceberg-rust/README.md](iceberg-rust/README.md) for details.
-
-### Prerequisites
-
-- Rust 1.92 or higher
-
-### Quick Start
-
-```bash
-cd iceberg-rust
-cargo build
-cargo run
-```
-
 ## Learning Resources
 
 - [Apache Iceberg Documentation](https://iceberg.apache.org/)
