@@ -21,6 +21,13 @@ public class IcebergExamples {
     try {
       examples.schemaOperations();
       examples.dataTypeExamples();
+
+      // Run the table format v3 example
+      TableFormatV3Example v3Example = new TableFormatV3Example();
+      v3Example.demonstrateV3DataTypes();
+      v3Example.demonstrateDefaultValues();
+      v3Example.demonstrateV3Schema();
+
       LOG.info("All examples completed successfully!");
     } catch (Exception e) {
       LOG.error("Error running examples: {}", e.getMessage(), e);
@@ -32,8 +39,8 @@ public class IcebergExamples {
   public void dataTypeExamples() {
     LOG.info("=== Data Types Examples ===");
 
-    // Primitive types
-    LOG.info("Primitive Types:");
+    // Primitive types (v1/v2)
+    LOG.info("Primitive Types (v1/v2):");
     LOG.info("  Boolean: {}", Types.BooleanType.get());
     LOG.info("  Integer: {}", Types.IntegerType.get());
     LOG.info("  Long: {}", Types.LongType.get());
@@ -46,6 +53,14 @@ public class IcebergExamples {
     LOG.info("  TimestampNTZ: {}", Types.TimestampType.withoutZone());
     LOG.info("  Binary: {}", Types.BinaryType.get());
     LOG.info("  UUID: {}", Types.UUIDType.get());
+
+    // New primitive types introduced in v3
+    LOG.info("Primitive Types (new in v3):");
+    LOG.info("  TimestampNano (with zone): {}", Types.TimestampNanoType.withZone());
+    LOG.info("  TimestampNano (without zone): {}", Types.TimestampNanoType.withoutZone());
+    LOG.info("  Variant: {}", Types.VariantType.get());
+    LOG.info("  Geometry: {}", Types.GeometryType.crs84());
+    LOG.info("  Geography: {}", Types.GeographyType.crs84());
 
     // Complex types
     LOG.info("Complex Types:");

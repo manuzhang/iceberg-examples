@@ -38,6 +38,9 @@ Run specific example classes:
 
 # Schema evolution example
 ./gradlew runSchemaEvolution
+
+# Table format v3 example
+./gradlew runTableFormatV3
 ```
 
 ### Run Tests
@@ -66,6 +69,13 @@ Run specific example classes:
 - Updating column types (safe operations)
 - Deleting columns
 - Schema compatibility rules
+
+### 4. Table Format V3 (`TableFormatV3Example.java`)
+- Nanosecond-precision timestamp types (`timestamptz_ns`, `timestamp_ns`)
+- Variant type for semi-structured / schema-less data
+- Geospatial types: Geometry and Geography with CRS support
+- Default column values (initial default and write default)
+- Overview of Iceberg format version 3 additions
 
 ## Project Structure
 
