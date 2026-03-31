@@ -27,7 +27,7 @@ Apache Iceberg is an open table format for huge analytic datasets. This project 
 
 ### Rust Examples
 
-- Rust 1.92 or higher (install via [rustup](https://rustup.rs/))
+See [`iceberg-rust/README.md`](iceberg-rust/README.md) for Rust prerequisites and setup instructions.
 
 ## Getting Started
 
@@ -63,18 +63,7 @@ Run specific example classes:
 
 ### Rust Examples
 
-```bash
-cd iceberg-rust
-
-# Build
-cargo build
-
-# Run all examples
-cargo run
-
-# Run tests
-cargo test
-```
+See [`iceberg-rust/README.md`](iceberg-rust/README.md) for build, run, and test instructions.
 
 ## Examples Included
 
@@ -101,20 +90,7 @@ cargo test
 
 ### Rust Examples
 
-#### 1. Schema Operations (`schema_examples.rs`)
-- Building schemas using `Schema::builder()`
-- Defining required and optional fields
-- Inspecting fields by ID
-
-#### 2. Data Types (`data_types.rs`)
-- All 14 primitive types
-- Nested types: `list`, `map`, `struct`
-
-#### 3. Schema Evolution (`schema_evolution.rs`)
-- Adding columns, type promotions, evolution rules
-
-#### 4. Catalog Operations (`catalog_examples.rs`)
-- In-memory catalog, namespace and table creation
+See [`iceberg-rust/README.md`](iceberg-rust/README.md) for a full description of each example.
 
 ## Project Structure
 
@@ -134,14 +110,7 @@ cargo test
 │               └── example/
 │                   └── iceberg/
 │                       └── IcebergExamplesTest.java        # Unit tests
-└── iceberg-rust/                     # Rust source
-    ├── Cargo.toml
-    └── src/
-        ├── main.rs                   # Entry point
-        ├── schema_examples.rs        # Schema creation
-        ├── data_types.rs             # Data types
-        ├── schema_evolution.rs       # Schema evolution
-        └── catalog_examples.rs       # Catalog operations
+└── iceberg-rust/                     # Rust examples (see iceberg-rust/README.md)
 ```
 
 ## Key Dependencies
@@ -155,8 +124,7 @@ cargo test
 
 ### Rust
 
-- **iceberg 0.9.0**: Apache Iceberg native Rust implementation
-- **tokio**: Async runtime for catalog operations
+See [`iceberg-rust/README.md`](iceberg-rust/README.md).
 
 Note: These examples focus on demonstrating Iceberg's schema and data type APIs. For production table operations, you would typically add catalog implementations (Hadoop, Hive, REST, etc.) and file format dependencies (Parquet, ORC, etc.).
 
