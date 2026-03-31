@@ -48,6 +48,13 @@ task runSchemaEvolution(type: JavaExec) {
   classpath = sourceSets.main.runtimeClasspath
 }
 
+task runTableFormatV3(type: JavaExec) {
+  group = 'examples'
+  description = 'Run the Table Format V3 example'
+  mainClass = 'io.github.manuzhang.iceberg.examples.TableFormatV3Example'
+  classpath = sourceSets.main.runtimeClasspath
+}
+
 test {
   useJUnitPlatform()
 }

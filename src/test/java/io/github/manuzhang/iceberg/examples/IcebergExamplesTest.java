@@ -3,6 +3,7 @@ package io.github.manuzhang.iceberg.examples;
 import static org.junit.jupiter.api.Assertions.*;
 
 import org.apache.iceberg.Schema;
+import org.apache.iceberg.types.EdgeAlgorithm;
 import org.apache.iceberg.types.Types;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -112,5 +113,101 @@ class IcebergExamplesTest {
   void testExamplesInstantiation() {
     assertNotNull(examples);
     assertTrue(examples instanceof IcebergExamples);
+  }
+
+  @Test
+  @DisplayName("Test v3 nanosecond timestamp types")
+  void testTimestampNanoTypes() {
+    Types.TimestampNanoType tsWithZone = Types.TimestampNanoType.withZone();
+    Types.TimestampNanoType tsWithoutZone = Types.TimestampNanoType.withoutZone();
+
+    assertNotNull(tsWithZone);
+    assertNotNull(tsWithoutZone);
+    assertTrue(tsWithZone.shouldAdjustToUTC());
+    assertFalse(tsWithoutZone.shouldAdjustToUTC());
+    assertNotEquals(tsWithZone, tsWithoutZone);
+  }
+
+  @Test
+  @DisplayName("Test v3 variant type")
+  void testVariantType() {
+    Types.VariantType variantType = Types.VariantType.get();
+
+    assertNotNull(variantType);
+    assertTrue(variantType.isVariantType());
+    assertEquals(variantType, Types.VariantType.get()); // singleton
+  }
+
+  @Test
+  @DisplayName("Test v3 geospatial types")
+  void testGeospatialTypes() {
+    Types.GeometryType geometryCrs84 = Types.GeometryType.crs84();
+    Types.GeometryType geometryCustom = Types.GeometryType.of("EPSG:4326");
+    Types.GeographyType geographyCrs84 = Types.GeographyType.crs84();
+    Types.GeographyType geographySpherical =
+        Types.GeographyType.of("OGC:CRS84", EdgeAlgorithm.SPHERICAL);
+
+    assertNotNull(geometryCrs84);
+    assertNotNull(geometryCustom);
+    assertNotNull(geographyCrs84);
+    assertNotNull(geographySpherical);
+
+    // crs84() stores null internally (the default CRS); custom CRS stores the given string
+    assertNull(geometryCrs84.crs());
+    assertEquals("EPSG:4326", geometryCustom.crs());
+    // crs84() stores null internally for both crs and algorithm
+    assertNull(geographyCrs84.crs());
+    assertNull(geographyCrs84.algorithm());
+    assertEquals(EdgeAlgorithm.SPHERICAL, geographySpherical.algorithm());
+  }
+
+  @Test
+  @DisplayName("Test v3 default column values")
+  void testDefaultColumnValues() {
+    Types.NestedField fieldWithDefaults =
+        Types.NestedField.optional("status")
+            .withId(1)
+            .ofType(Types.StringType.get())
+            .withInitialDefault("active")
+            .withWriteDefault("active")
+            .build();
+
+    assertNotNull(fieldWithDefaults);
+    assertEquals("active", fieldWithDefaults.initialDefault());
+    assertEquals("active", fieldWithDefaults.writeDefault());
+    assertFalse(fieldWithDefaults.isRequired());
+  }
+
+  @Test
+  @DisplayName("Test v3 schema with new types and default values")
+  void testV3Schema() {
+    Schema v3Schema =
+        new Schema(
+            Types.NestedField.required(1, "id", Types.LongType.get()),
+            Types.NestedField.required(2, "event_time", Types.TimestampNanoType.withZone()),
+            Types.NestedField.optional(3, "payload", Types.VariantType.get()),
+            Types.NestedField.optional(4, "location", Types.GeographyType.crs84()),
+            Types.NestedField.optional("status")
+                .withId(5)
+                .ofType(Types.StringType.get())
+                .withInitialDefault("active")
+                .withWriteDefault("active")
+                .build());
+
+    assertEquals(5, v3Schema.columns().size());
+    assertEquals(Types.TimestampNanoType.withZone(), v3Schema.findType("event_time"));
+    assertTrue(v3Schema.findType("payload").isVariantType());
+    assertEquals("active", v3Schema.findField("status").initialDefault());
+  }
+
+  @Test
+  @DisplayName("Test TableFormatV3Example class can be instantiated and run")
+  void testTableFormatV3Example() {
+    TableFormatV3Example v3Example = new TableFormatV3Example();
+    assertNotNull(v3Example);
+    // Verify each method runs without exception
+    assertDoesNotThrow(v3Example::demonstrateV3DataTypes);
+    assertDoesNotThrow(v3Example::demonstrateDefaultValues);
+    assertDoesNotThrow(v3Example::demonstrateV3Schema);
   }
 }
