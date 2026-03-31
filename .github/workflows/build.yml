@@ -39,3 +39,40 @@ jobs:
       with:
         name: test-reports-jdk${{ matrix.java }}
         path: build/reports/tests/test/
+
+  build-rust:
+    runs-on: ubuntu-latest
+    name: Build and Test Rust Examples
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up Rust toolchain
+      uses: dtolnay/rust-toolchain@stable
+      with:
+        toolchain: stable
+        components: clippy
+
+    - name: Cache Rust dependencies
+      uses: actions/cache@v4
+      with:
+        path: |
+          ~/.cargo/registry
+          ~/.cargo/git
+          iceberg-rust/target
+        key: ${{ runner.os }}-cargo-${{ hashFiles('iceberg-rust/Cargo.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-cargo-
+
+    - name: Build Rust examples
+      working-directory: iceberg-rust
+      run: cargo build
+
+    - name: Run Rust tests
+      working-directory: iceberg-rust
+      run: cargo test
+
+    - name: Run Clippy
+      working-directory: iceberg-rust
+      run: cargo clippy -- -D warnings
