@@ -41,6 +41,9 @@ Run specific example classes:
 
 # Table format v3 example
 ./gradlew runTableFormatV3
+
+# Write an Iceberg table to the local filesystem (for cross-language reading)
+./gradlew runCrossLanguageWrite
 ```
 
 ### Run Tests
@@ -77,14 +80,26 @@ Run specific example classes:
 - Default column values (initial default and write default)
 - Overview of Iceberg format version 3 additions
 
+### 5. Cross-Language Write (`CrossLanguageWriteExample.java`)
+- Writes a `users` table to the local filesystem as a real Iceberg table with Parquet data files
+- Uses `HadoopTables` (catalog-less) and `GenericParquetWriter` for local filesystem I/O
+- Produces a table at `/tmp/iceberg-java-rust-example` that the Rust example can read
+- Demonstrates Iceberg's cross-language interoperability (write in Java, read in Rust)
+
 ## Key Dependencies
 
 - **Apache Iceberg Core**: Table format and core API functionality
 - **Apache Iceberg API**: Public API interfaces and types
+- **Apache Iceberg Parquet**: Parquet file format integration
+- **Apache Parquet Column**: Parquet column I/O (needed at compile time for `GenericParquetWriter`)
+- **Apache Hadoop Common**: Local filesystem support via `HadoopTables`
 - **SLF4J**: Logging framework
 - **JUnit 5**: Testing framework
 
-Note: These examples focus on demonstrating Iceberg's schema and data type APIs. For production table operations, you would typically add catalog implementations (Hadoop, Hive, REST, etc.) and file format dependencies (Parquet, ORC, etc.).
+Note: Most examples focus on demonstrating Iceberg's schema and data type APIs. The
+`CrossLanguageWriteExample` goes further: it uses Hadoop-backed local filesystem I/O and Parquet to
+write a real Iceberg table that can be read by any Iceberg implementation, including the Rust
+example in `iceberg-rust/`.
 
 ## Next Steps
 

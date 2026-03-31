@@ -2,12 +2,15 @@ package io.github.manuzhang.iceberg.examples;
 
 import static org.junit.jupiter.api.Assertions.*;
 
+import java.io.File;
+import java.nio.file.Path;
 import org.apache.iceberg.Schema;
 import org.apache.iceberg.types.EdgeAlgorithm;
 import org.apache.iceberg.types.Types;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.io.TempDir;
 
 /**
  * Unit tests for Iceberg examples. These tests demonstrate basic functionality without requiring
@@ -209,5 +212,57 @@ class IcebergExamplesTest {
     assertDoesNotThrow(v3Example::demonstrateV3DataTypes);
     assertDoesNotThrow(v3Example::demonstrateDefaultValues);
     assertDoesNotThrow(v3Example::demonstrateV3Schema);
+  }
+
+  @Test
+  @DisplayName("Test CrossLanguageWriteExample creates a valid Iceberg table on disk")
+  void testCrossLanguageWrite(@TempDir Path tempDir) throws Exception {
+    CrossLanguageWriteExample example = new CrossLanguageWriteExample();
+    example.writeTable(tempDir.toString());
+
+    // Verify the metadata directory and at least two metadata files were created
+    // (v1 = table creation, v2 = after the first append).
+    File metadataDir = new File(tempDir.toFile(), "metadata");
+    assertTrue(metadataDir.exists(), "metadata directory should exist");
+    assertTrue(metadataDir.isDirectory(), "metadata should be a directory");
+
+    File[] metadataFiles = metadataDir.listFiles(f -> f.getName().endsWith(".metadata.json"));
+    assertNotNull(metadataFiles);
+    assertTrue(metadataFiles.length >= 2, "expected at least two metadata files (v1 and v2)");
+
+    // Verify the data directory and a Parquet file were created.
+    File dataDir = new File(tempDir.toFile(), "data");
+    assertTrue(dataDir.exists(), "data directory should exist");
+
+    File[] parquetFiles = dataDir.listFiles(f -> f.getName().endsWith(".parquet"));
+    assertNotNull(parquetFiles);
+    assertEquals(1, parquetFiles.length, "expected exactly one Parquet data file");
+  }
+
+  @Test
+  @DisplayName("Test CrossLanguageWriteExample schema has expected fields")
+  void testCrossLanguageWriteSchema() {
+    CrossLanguageWriteExample example = new CrossLanguageWriteExample();
+    Schema schema = example.createSchema();
+
+    assertNotNull(schema);
+    assertEquals(3, schema.columns().size());
+    assertTrue(schema.findField("id").isRequired());
+    assertTrue(schema.findField("name").isRequired());
+    assertFalse(schema.findField("age").isRequired());
+  }
+
+  @Test
+  @DisplayName("Test CrossLanguageWriteExample sample records")
+  void testCrossLanguageWriteSampleRecords() {
+    CrossLanguageWriteExample example = new CrossLanguageWriteExample();
+    Schema schema = example.createSchema();
+
+    var records = example.createSampleRecords(schema);
+    assertEquals(3, records.size());
+    assertEquals(1L, records.get(0).getField("id"));
+    assertEquals("Alice", records.get(0).getField("name"));
+    assertEquals(30, records.get(0).getField("age"));
+    assertNull(records.get(2).getField("age"), "Charlie's age should be null");
   }
 }

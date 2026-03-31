@@ -21,6 +21,19 @@ dependencies {
   implementation 'org.apache.iceberg:iceberg-api:1.10.0'
   implementation 'org.apache.iceberg:iceberg-core:1.10.0'
 
+  // Parquet file format support (for writing data files)
+  implementation 'org.apache.iceberg:iceberg-parquet:1.10.0'
+  // parquet-column is needed at compile time for GenericParquetWriter.buildWriter's
+  // MessageType parameter (iceberg-parquet declares it runtime-only)
+  implementation 'org.apache.parquet:parquet-column:1.16.0'
+
+  // Hadoop common (required by HadoopTables and local filesystem I/O)
+  implementation('org.apache.hadoop:hadoop-common:3.3.4') {
+    exclude group: 'log4j', module: 'log4j'
+    exclude group: 'org.slf4j', module: 'slf4j-reload4j'
+    exclude group: 'ch.qos.reload4j', module: 'reload4j'
+  }
+
   // Logging
   implementation 'org.slf4j:slf4j-simple:2.0.9'
 
@@ -52,6 +65,13 @@ task runTableFormatV3(type: JavaExec) {
   group = 'examples'
   description = 'Run the Table Format V3 example'
   mainClass = 'io.github.manuzhang.iceberg.examples.TableFormatV3Example'
+  classpath = sourceSets.main.runtimeClasspath
+}
+
+task runCrossLanguageWrite(type: JavaExec) {
+  group = 'examples'
+  description = 'Write an Iceberg table to the local filesystem (readable by the Rust example)'
+  mainClass = 'io.github.manuzhang.iceberg.examples.CrossLanguageWriteExample'
   classpath = sourceSets.main.runtimeClasspath
 }
 

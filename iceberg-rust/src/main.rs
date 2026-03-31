@@ -21,6 +21,7 @@
 //! catalog operations using the [`iceberg`] crate.
 
 mod catalog_examples;
+mod cross_language_read;
 mod data_types;
 mod schema_evolution;
 mod schema_examples;
@@ -39,6 +40,9 @@ async fn main() -> iceberg::Result<()> {
     println!();
 
     catalog_examples::demonstrate_catalog_operations().await?;
+    println!();
+
+    cross_language_read::demonstrate_cross_language_read().await?;
 
     println!("\nAll examples completed successfully!");
     Ok(())

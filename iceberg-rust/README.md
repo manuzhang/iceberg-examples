@@ -38,6 +38,16 @@ cargo build
 cargo run
 ```
 
+To exercise the cross-language read example, run the Java write example first:
+
+```bash
+# From the iceberg-java/ directory
+./gradlew runCrossLanguageWrite
+
+# Then, from iceberg-rust/
+cargo run
+```
+
 ### Run Tests
 
 ```bash
@@ -76,17 +86,26 @@ cargo test
 - Listing tables in a namespace
 - Checking table existence
 
+### 5. Cross-Language Read (`cross_language_read.rs`)
+
+- Reads the Iceberg table written by the Java `CrossLanguageWriteExample`
+- Uses `StaticTable::from_metadata_file` and `FileIO::new_with_fs()` for local-filesystem access
+- Scans data with `TableScan::to_arrow()` and collects Arrow `RecordBatch`es
+- Pretty-prints the table contents using `arrow_cast::pretty::pretty_format_batches`
+- Demonstrates Iceberg's cross-language interoperability (write in Java, read in Rust)
+
 ## Project Structure
 
 ```
 iceberg-rust/
 ├── Cargo.toml
 └── src/
-    ├── main.rs               # Entry point, runs all examples
-    ├── schema_examples.rs    # Schema creation and field inspection
-    ├── data_types.rs         # Primitive and nested type demonstrations
-    ├── schema_evolution.rs   # Schema evolution concepts
-    └── catalog_examples.rs   # In-memory catalog and table operations
+    ├── main.rs                  # Entry point, runs all examples
+    ├── schema_examples.rs       # Schema creation and field inspection
+    ├── data_types.rs            # Primitive and nested type demonstrations
+    ├── schema_evolution.rs      # Schema evolution concepts
+    ├── catalog_examples.rs      # In-memory catalog and table operations
+    └── cross_language_read.rs   # Read Iceberg table written by the Java example
 ```
 
 ## Key Dependencies
@@ -94,7 +113,10 @@ iceberg-rust/
 | Crate | Version | Purpose |
 |-------|---------|---------|
 | [`iceberg`](https://crates.io/crates/iceberg) | 0.9.0 | Apache Iceberg Rust implementation |
-| [`tokio`](https://crates.io/crates/tokio) | 1 | Async runtime for catalog operations |
+| [`tokio`](https://crates.io/crates/tokio) | 1 | Async runtime for catalog and scan operations |
+| [`arrow-array`](https://crates.io/crates/arrow-array) | 57 | Arrow columnar data (RecordBatch) |
+| [`arrow-cast`](https://crates.io/crates/arrow-cast) | 57 | Pretty-print Arrow record batches |
+| [`futures`](https://crates.io/crates/futures) | 0.3 | Async stream utilities (`TryStreamExt`) |
 
 ## Learning Resources
 
