@@ -155,7 +155,13 @@ public class CrossLanguageWriteExample {
     if (!dir.exists()) {
       return;
     }
-    Path dirPath = dir.toPath();
-    Files.walk(dirPath).sorted(Comparator.reverseOrder()).map(Path::toFile).forEach(File::delete);
+    // Collect paths in reverse order so children are deleted before parents.
+    List<Path> paths;
+    try (var stream = Files.walk(dir.toPath())) {
+      paths = stream.sorted(Comparator.reverseOrder()).toList();
+    }
+    for (Path path : paths) {
+      Files.delete(path);
+    }
   }
 }

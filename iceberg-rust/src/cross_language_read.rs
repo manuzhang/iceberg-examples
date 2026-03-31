@@ -31,6 +31,20 @@ use arrow_cast::pretty::pretty_format_batches;
 /// Location of the Iceberg table written by the Java example.
 pub const TABLE_LOCATION: &str = "/tmp/iceberg-java-rust-example";
 
+/// Returns the path to the current metadata JSON file by reading the
+/// `version-hint.text` file that Iceberg writes on every commit.
+///
+/// Returns `None` if the table does not exist or the hint cannot be parsed.
+fn current_metadata_path(table_location: &str) -> Option<String> {
+    let hint_path = format!("{table_location}/metadata/version-hint.text");
+    let version: u32 = std::fs::read_to_string(&hint_path)
+        .ok()?
+        .trim()
+        .parse()
+        .ok()?;
+    Some(format!("{table_location}/metadata/v{version}.metadata.json"))
+}
+
 /// Reads the Iceberg table written by the Java example and prints its contents.
 ///
 /// If the table has not yet been written (i.e. the Java example has not been
@@ -38,16 +52,12 @@ pub const TABLE_LOCATION: &str = "/tmp/iceberg-java-rust-example";
 pub async fn demonstrate_cross_language_read() -> Result<()> {
     println!("=== Cross-Language Read Example ===");
 
-    // The Java example commits one snapshot after the initial table creation, so
-    // the current metadata file is v2.metadata.json.
-    let metadata_path = format!("{TABLE_LOCATION}/metadata/v2.metadata.json");
-
-    if !std::path::Path::new(&metadata_path).exists() {
+    let Some(metadata_path) = current_metadata_path(TABLE_LOCATION) else {
         println!("  Iceberg table not found at: {TABLE_LOCATION}");
         println!("  Run the Java write example first:");
         println!("    cd ../iceberg-java && ./gradlew runCrossLanguageWrite");
         return Ok(());
-    }
+    };
 
     // Use the local-filesystem FileIO.  It normalises file:/, file://, and bare
     // absolute paths, so it handles whatever path format Java stored in the
