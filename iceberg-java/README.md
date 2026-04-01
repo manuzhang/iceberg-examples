@@ -13,7 +13,7 @@ Apache Iceberg is an open table format for huge analytic datasets. This project 
 
 ## Prerequisites
 
-- Java 11 or higher
+- Java 17 or higher
 - Gradle 8.5 or higher (included via wrapper)
 
 ## Getting Started
