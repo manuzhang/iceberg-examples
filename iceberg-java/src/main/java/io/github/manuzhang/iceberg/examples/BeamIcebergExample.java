@@ -1,4 +1,4 @@
-package io.github.manuzhang.iceberg.beam;
+package io.github.manuzhang.iceberg.examples;
 
 import java.io.IOException;
 import java.nio.file.Files;

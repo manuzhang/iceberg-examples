@@ -7,9 +7,8 @@ multiple languages.
 
 | Directory | Language | Description |
 |-----------|----------|-------------|
-| [`iceberg-java/`](iceberg-java/) | Java | Examples using the Apache Iceberg Java API |
+| [`iceberg-java/`](iceberg-java/) | Java | Examples using the Apache Iceberg Java API (including Apache Beam) |
 | [`iceberg-rust/`](iceberg-rust/) | Rust | Examples using the Apache Iceberg Rust API |
-| [`iceberg-beam/`](iceberg-beam/) | Java | Examples using Apache Beam with Apache Iceberg via IcebergIO |
 
 ## Learning Resources
 

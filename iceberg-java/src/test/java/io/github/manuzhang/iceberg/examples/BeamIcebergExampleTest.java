@@ -1,4 +1,4 @@
-package io.github.manuzhang.iceberg.beam;
+package io.github.manuzhang.iceberg.examples;
 
 import static org.junit.jupiter.api.Assertions.*;
 
