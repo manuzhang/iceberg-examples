@@ -1,7 +1,7 @@
 # Apache Iceberg Rust Examples
 
 A collection of examples demonstrating the [Apache Iceberg Rust API](https://crates.io/crates/iceberg) for
-table format operations, schema definition, data types, and catalog management.
+table format operations, schema definition, data types, catalog management, and DataFusion integration.
 
 ## Overview
 
@@ -12,6 +12,7 @@ Apache Iceberg. These examples cover:
 - Working with Iceberg's rich type system
 - Understanding schema evolution concepts
 - Creating namespaces and tables using an in-memory catalog
+- Querying Iceberg tables with Apache DataFusion (the engine that powers [Apache DataFusion Comet](https://datafusion.apache.org/comet/))
 
 ## Prerequisites
 
@@ -76,17 +77,33 @@ cargo test
 - Listing tables in a namespace
 - Checking table existence
 
+### 5. DataFusion Integration (`datafusion_examples.rs`)
+
+Demonstrates how to combine the `iceberg` and `iceberg-datafusion` crates to run
+DataFusion SQL queries against Iceberg tables — the same query engine used by
+[Apache DataFusion Comet](https://datafusion.apache.org/comet/).
+
+- Creating an Iceberg catalog backed by the **local filesystem**
+  (`LocalFsStorageFactory`) so data is persisted as real Parquet files
+- Creating a partitioned `orders` table (partitioned by `category` using
+  the identity transform)
+- Inserting rows with DataFusion `INSERT INTO` SQL
+- Running a plain `SELECT` to read all rows back
+- Applying a `WHERE` predicate to demonstrate filter/predicate pushdown
+- Running an aggregation query (`COUNT`, `SUM`, `GROUP BY`)
+
 ## Project Structure
 
 ```
 iceberg-rust/
 ├── Cargo.toml
 └── src/
-    ├── main.rs               # Entry point, runs all examples
-    ├── schema_examples.rs    # Schema creation and field inspection
-    ├── data_types.rs         # Primitive and nested type demonstrations
-    ├── schema_evolution.rs   # Schema evolution concepts
-    └── catalog_examples.rs   # In-memory catalog and table operations
+    ├── main.rs                  # Entry point, runs all examples
+    ├── schema_examples.rs       # Schema creation and field inspection
+    ├── data_types.rs            # Primitive and nested type demonstrations
+    ├── schema_evolution.rs      # Schema evolution concepts
+    ├── catalog_examples.rs      # In-memory catalog and table operations
+    └── datafusion_examples.rs   # DataFusion (Comet) SQL integration
 ```
 
 ## Key Dependencies
@@ -94,22 +111,27 @@ iceberg-rust/
 | Crate | Version | Purpose |
 |-------|---------|---------|
 | [`iceberg`](https://crates.io/crates/iceberg) | 0.9.0 | Apache Iceberg Rust implementation |
-| [`tokio`](https://crates.io/crates/tokio) | 1 | Async runtime for catalog operations |
+| [`iceberg-datafusion`](https://crates.io/crates/iceberg-datafusion) | 0.9.0 | DataFusion table/catalog providers for Iceberg |
+| [`datafusion`](https://crates.io/crates/datafusion) | 52 | Apache Arrow DataFusion query engine |
+| [`tokio`](https://crates.io/crates/tokio) | 1 | Async runtime for catalog and DataFusion operations |
+| [`tempfile`](https://crates.io/crates/tempfile) | 3 | Temporary directories for local-filesystem examples |
 
 ## Learning Resources
 
 - [Apache Iceberg Rust Documentation](https://rust.iceberg.apache.org/)
 - [iceberg crate on crates.io](https://crates.io/crates/iceberg)
 - [iceberg-rust GitHub repository](https://github.com/apache/iceberg-rust)
+- [Apache DataFusion Comet](https://datafusion.apache.org/comet/)
 - [Apache Iceberg Table Format Specification](https://iceberg.apache.org/spec/)
 
 ## Notes
 
-These examples use an **in-memory catalog** (`MemoryCatalogBuilder` + `MemoryStorageFactory`) which
-requires no external infrastructure. For production use you would add:
+The catalog and DataFusion examples use a **local-filesystem catalog**
+(`MemoryCatalogBuilder` + `LocalFsStorageFactory`) which requires no external
+infrastructure. For production use you would add:
 
 - A persistent catalog: REST, Hive Metastore, AWS Glue, or SQL-backed
-- A storage backend: S3, GCS, Azure ADLS, or local filesystem
+- A cloud storage backend: S3, GCS, Azure ADLS
   (via [`iceberg-storage-opendal`](https://crates.io/crates/iceberg-storage-opendal))
-- A compute integration: Apache DataFusion
-  (via [`iceberg-datafusion`](https://crates.io/crates/iceberg-datafusion))
+- Comet acceleration inside a Spark cluster using the
+  [DataFusion Comet plugin](https://datafusion.apache.org/comet/)

@@ -17,11 +17,13 @@
 
 //! Apache Iceberg Rust examples.
 //!
-//! Demonstrates schema definition, data types, schema evolution, and
-//! catalog operations using the [`iceberg`] crate.
+//! Demonstrates schema definition, data types, schema evolution,
+//! catalog operations, and DataFusion (Comet) integration using the
+//! [`iceberg`] and [`iceberg_datafusion`] crates.
 
 mod catalog_examples;
 mod data_types;
+mod datafusion_examples;
 mod schema_evolution;
 mod schema_examples;
 
@@ -39,6 +41,9 @@ async fn main() -> iceberg::Result<()> {
     println!();
 
     catalog_examples::demonstrate_catalog_operations().await?;
+    println!();
+
+    datafusion_examples::demonstrate_datafusion_integration().await?;
 
     println!("\nAll examples completed successfully!");
     Ok(())
