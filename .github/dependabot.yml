@@ -1,0 +1,16 @@
+version: 2
+updates:
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+
+  - package-ecosystem: "gradle"
+    directory: "/iceberg-java"
+    schedule:
+      interval: "weekly"
+
+  - package-ecosystem: "cargo"
+    directory: "/iceberg-rust"
+    schedule:
+      interval: "weekly"
