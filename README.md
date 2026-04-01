@@ -7,7 +7,7 @@ multiple languages.
 
 | Directory | Language | Description |
 |-----------|----------|-------------|
-| [`iceberg-java/`](iceberg-java/) | Java | Examples using the Apache Iceberg Java API |
+| [`iceberg-java/`](iceberg-java/) | Java | Examples using the Apache Iceberg Java API (including Apache Beam) |
 | [`iceberg-rust/`](iceberg-rust/) | Rust | Examples using the Apache Iceberg Rust API |
 
 ## Learning Resources
@@ -15,6 +15,7 @@ multiple languages.
 - [Apache Iceberg Documentation](https://iceberg.apache.org/)
 - [Iceberg Java API Quickstart](https://iceberg.apache.org/docs/latest/java-api-quickstart/)
 - [Apache Iceberg Rust Documentation](https://rust.iceberg.apache.org/)
+- [Apache Beam IcebergIO Documentation](https://beam.apache.org/documentation/io/built-in/iceberg/)
 - [Iceberg Table Format Specification](https://iceberg.apache.org/spec/)
 
 ## License

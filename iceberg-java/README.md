@@ -41,6 +41,9 @@ Run specific example classes:
 
 # Table format v3 example
 ./gradlew runTableFormatV3
+
+# Apache Beam + Iceberg example
+./gradlew runBeamExample
 ```
 
 ### Run Tests
@@ -77,10 +80,20 @@ Run specific example classes:
 - Default column values (initial default and write default)
 - Overview of Iceberg format version 3 additions
 
+### 5. Apache Beam + Iceberg (`BeamIcebergExample.java`)
+- Defining a Beam schema that maps to an Iceberg table
+- Writing rows to an Iceberg table with `IcebergIO.writeRows()`
+- Reading rows back from an Iceberg table with `IcebergIO.readRows()`
+- Configuring a local HadoopCatalog (no external catalog service required)
+- Running pipelines locally with the DirectRunner (no cluster required)
+
 ## Key Dependencies
 
 - **Apache Iceberg Core**: Table format and core API functionality
 - **Apache Iceberg API**: Public API interfaces and types
+- **Apache Beam SDK**: Unified batch/streaming data processing
+- **Apache Beam IcebergIO**: Beam connector for reading/writing Iceberg tables
+- **Apache Hadoop Common**: Filesystem support for HadoopCatalog
 - **SLF4J**: Logging framework
 - **JUnit 5**: Testing framework
 
@@ -111,6 +124,7 @@ These examples demonstrate Iceberg's core schema and data APIs. For complete tab
 
 - [Apache Iceberg Documentation](https://iceberg.apache.org/)
 - [Iceberg Java API Quickstart](https://iceberg.apache.org/docs/latest/java-api-quickstart/)
+- [Apache Beam IcebergIO Documentation](https://beam.apache.org/documentation/io/built-in/iceberg/)
 - [Iceberg Table Format Specification](https://iceberg.apache.org/spec/)
 
 ## Important Notes

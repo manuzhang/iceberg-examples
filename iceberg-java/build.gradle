@@ -16,10 +16,32 @@ repositories {
   mavenCentral()
 }
 
+def beamVersion = '2.61.0'
+def hadoopVersion = '3.3.6'
+
+configurations.all {
+  // Resolve logging conflicts: prefer slf4j-simple (set at runtime)
+  exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+  exclude group: 'org.slf4j', module: 'slf4j-reload4j'
+  exclude group: 'log4j', module: 'log4j'
+}
+
 dependencies {
   // Apache Iceberg core dependencies
   implementation 'org.apache.iceberg:iceberg-api:1.10.0'
   implementation 'org.apache.iceberg:iceberg-core:1.10.0'
+
+  // Apache Beam core SDK
+  implementation "org.apache.beam:beam-sdks-java-core:${beamVersion}"
+
+  // Apache Beam IcebergIO connector (brings in Iceberg as a transitive dependency)
+  implementation "org.apache.beam:beam-sdks-java-io-iceberg:${beamVersion}"
+
+  // Apache Hadoop (required for HadoopCatalog filesystem access)
+  implementation "org.apache.hadoop:hadoop-common:${hadoopVersion}"
+
+  // DirectRunner for local execution (no cluster required)
+  runtimeOnly "org.apache.beam:beam-runners-direct-java:${beamVersion}"
 
   // Logging
   implementation 'org.slf4j:slf4j-simple:2.0.9'
@@ -52,6 +74,13 @@ task runTableFormatV3(type: JavaExec) {
   group = 'examples'
   description = 'Run the Table Format V3 example'
   mainClass = 'io.github.manuzhang.iceberg.examples.TableFormatV3Example'
+  classpath = sourceSets.main.runtimeClasspath
+}
+
+task runBeamExample(type: JavaExec) {
+  group = 'examples'
+  description = 'Run the Apache Beam + Iceberg example'
+  mainClass = 'io.github.manuzhang.iceberg.examples.BeamIcebergExample'
   classpath = sourceSets.main.runtimeClasspath
 }
 
