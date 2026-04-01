@@ -16,7 +16,7 @@ repositories {
   mavenCentral()
 }
 
-def beamVersion = '2.61.0'
+def beamVersion = '2.72.0'
 def hadoopVersion = '3.4.3'
 
 configurations.all {
