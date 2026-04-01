@@ -29,6 +29,8 @@ Thumbs.db
 # But include gradle wrapper
 !iceberg-java/gradle/wrapper/gradle-wrapper.jar
 !iceberg-java/gradle/wrapper/gradle-wrapper.properties
+!iceberg-beam/gradle/wrapper/gradle-wrapper.jar
+!iceberg-beam/gradle/wrapper/gradle-wrapper.properties
 
 # Log files
 *.log
