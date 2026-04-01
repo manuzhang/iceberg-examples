@@ -1,0 +1,88 @@
+plugins {
+  id 'java'
+  id 'application'
+  id 'com.diffplug.spotless' version '6.23.3'
+}
+
+group = 'io.github.manuzhang'
+version = '1.0.0-SNAPSHOT'
+
+java {
+  sourceCompatibility = JavaVersion.VERSION_17
+  targetCompatibility = JavaVersion.VERSION_17
+}
+
+repositories {
+  mavenCentral()
+}
+
+def beamVersion = '2.61.0'
+def hadoopVersion = '3.3.6'
+
+configurations.all {
+  // Resolve logging conflicts: prefer slf4j-simple (set at runtime)
+  exclude group: 'org.slf4j', module: 'slf4j-log4j12'
+  exclude group: 'org.slf4j', module: 'slf4j-reload4j'
+  exclude group: 'log4j', module: 'log4j'
+}
+
+dependencies {
+  // Apache Beam core SDK
+  implementation "org.apache.beam:beam-sdks-java-core:${beamVersion}"
+
+  // Apache Beam IcebergIO connector (brings in Iceberg as a transitive dependency)
+  implementation "org.apache.beam:beam-sdks-java-io-iceberg:${beamVersion}"
+
+  // Apache Hadoop (required for HadoopCatalog filesystem access)
+  implementation "org.apache.hadoop:hadoop-common:${hadoopVersion}"
+
+  // DirectRunner for local execution (no cluster required)
+  runtimeOnly "org.apache.beam:beam-runners-direct-java:${beamVersion}"
+
+  // Logging
+  runtimeOnly 'org.slf4j:slf4j-simple:2.0.9'
+
+  // Testing
+  testImplementation 'org.junit.jupiter:junit-jupiter:5.10.0'
+  testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+application {
+  mainClass = 'io.github.manuzhang.iceberg.beam.BeamIcebergExample'
+}
+
+test {
+  useJUnitPlatform()
+}
+
+tasks.withType(JavaCompile) {
+  options.encoding = 'UTF-8'
+}
+
+// Spotless configuration for code formatting
+spotless {
+  java {
+    target 'src/**/*.java'
+
+    googleJavaFormat()
+
+    // Remove unused imports
+    removeUnusedImports()
+
+    // Ensure files end with newline
+    endWithNewline()
+
+    // Trim trailing whitespace
+    trimTrailingWhitespace()
+
+    // Format imports in alphabetic order
+    importOrder()
+  }
+
+  format 'misc', {
+    target '*.gradle', '*.md', '.gitignore'
+
+    trimTrailingWhitespace()
+    endWithNewline()
+  }
+}
