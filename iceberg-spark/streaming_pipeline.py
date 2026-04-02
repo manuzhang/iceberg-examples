@@ -28,16 +28,19 @@ Install PySpark with pipeline support::
 
     pip install "pyspark[pipelines]==4.1.*"
 
-Download the Iceberg Spark runtime JAR (adjust version as needed)::
+Build the Iceberg Spark 4.1 runtime JAR from source (no Maven Central release
+exists yet)::
 
-    curl -O https://repo1.maven.org/maven2/org/apache/iceberg/\
-iceberg-spark-runtime-4.1_2.12/1.8.1/iceberg-spark-runtime-4.1_2.12-1.8.1.jar
+    git clone https://github.com/apache/iceberg.git
+    cd iceberg
+    ./gradlew :iceberg-spark:iceberg-spark-runtime-4.1_2.12:shadowJar
+    # JAR: iceberg-spark/iceberg-spark-runtime-4.1_2.12/build/libs/iceberg-spark-runtime-4.1_2.12-*-SNAPSHOT.jar
 
 Run the pipeline::
 
     spark-pipelines run \\
         --pipeline-file streaming_pipeline.py \\
-        --pipeline-conf spark.jars=iceberg-spark-runtime-4.1_2.12-1.8.1.jar \\
+        --pipeline-conf spark.jars=/path/to/iceberg/iceberg-spark/iceberg-spark-runtime-4.1_2.12/build/libs/iceberg-spark-runtime-4.1_2.12-*-SNAPSHOT.jar \\
         --pipeline-conf spark.sql.catalog.local=org.apache.iceberg.spark.SparkCatalog \\
         --pipeline-conf spark.sql.catalog.local.type=hadoop \\
         --pipeline-conf spark.sql.catalog.local.warehouse=/tmp/iceberg-spark-example \\

@@ -29,16 +29,23 @@ Install the PySpark package (includes the `spark-pipelines` CLI)::
 pip install "pyspark[pipelines]==4.1.*"
 ```
 
-Download the Iceberg Spark runtime JAR:
+Build the Iceberg Spark 4.1 runtime JAR from source (no Maven Central release exists yet):
 
 ```bash
-curl -O https://repo1.maven.org/maven2/org/apache/iceberg/\
-iceberg-spark-runtime-4.1_2.12/1.8.1/iceberg-spark-runtime-4.1_2.12-1.8.1.jar
+git clone https://github.com/apache/iceberg.git
+cd iceberg
+./gradlew :iceberg-spark:iceberg-spark-runtime-4.1_2.12:shadowJar
 ```
 
-> **Note** — The Iceberg runtime JAR version must match your Iceberg release.
-> Check [Maven Central](https://search.maven.org/artifact/org.apache.iceberg/iceberg-spark-runtime-4.1_2.12)
-> for the latest version.
+The built JAR will be at:
+
+```
+iceberg/iceberg-spark/iceberg-spark-runtime-4.1_2.12/build/libs/iceberg-spark-runtime-4.1_2.12-*-SNAPSHOT.jar
+```
+
+> **Note** — A released Iceberg runtime for Spark 4.1 will be published to Maven Central once
+> the Iceberg project cuts a release with Spark 4.1 support.  Track progress at
+> [apache/iceberg](https://github.com/apache/iceberg).
 
 ## Examples Included
 
@@ -67,7 +74,7 @@ orders               (inline sample data as source)
 ```bash
 spark-pipelines run \
     --pipeline-file batch_pipeline.py \
-    --pipeline-conf spark.jars=iceberg-spark-runtime-4.1_2.12-1.8.1.jar \
+    --pipeline-conf spark.jars=/path/to/iceberg/iceberg-spark/iceberg-spark-runtime-4.1_2.12/build/libs/iceberg-spark-runtime-4.1_2.12-*-SNAPSHOT.jar \
     --pipeline-conf spark.sql.catalog.local=org.apache.iceberg.spark.SparkCatalog \
     --pipeline-conf spark.sql.catalog.local.type=hadoop \
     --pipeline-conf spark.sql.catalog.local.warehouse=/tmp/iceberg-spark-example \
@@ -111,7 +118,7 @@ humidity_readings     (@flow)  ─┘        └── sensor_hourly_stats  (@ma
 ```bash
 spark-pipelines run \
     --pipeline-file streaming_pipeline.py \
-    --pipeline-conf spark.jars=iceberg-spark-runtime-4.1_2.12-1.8.1.jar \
+    --pipeline-conf spark.jars=/path/to/iceberg/iceberg-spark/iceberg-spark-runtime-4.1_2.12/build/libs/iceberg-spark-runtime-4.1_2.12-*-SNAPSHOT.jar \
     --pipeline-conf spark.sql.catalog.local=org.apache.iceberg.spark.SparkCatalog \
     --pipeline-conf spark.sql.catalog.local.type=hadoop \
     --pipeline-conf spark.sql.catalog.local.warehouse=/tmp/iceberg-spark-example \
@@ -138,7 +145,7 @@ SQL equivalents of both pipelines above, using the declarative SQL syntax:
 ```bash
 spark-pipelines run \
     --pipeline-file sql_pipeline.sql \
-    --pipeline-conf spark.jars=iceberg-spark-runtime-4.1_2.12-1.8.1.jar \
+    --pipeline-conf spark.jars=/path/to/iceberg/iceberg-spark/iceberg-spark-runtime-4.1_2.12/build/libs/iceberg-spark-runtime-4.1_2.12-*-SNAPSHOT.jar \
     --pipeline-conf spark.sql.catalog.local=org.apache.iceberg.spark.SparkCatalog \
     --pipeline-conf spark.sql.catalog.local.type=hadoop \
     --pipeline-conf spark.sql.catalog.local.warehouse=/tmp/iceberg-spark-example \
@@ -161,7 +168,7 @@ iceberg-spark/
 | Package / JAR | Purpose |
 |---------------|---------|
 | `pyspark[pipelines]==4.1.*` | Spark engine + `spark-pipelines` CLI |
-| `iceberg-spark-runtime-4.1_2.12` | Iceberg catalog and table format integration |
+| `iceberg-spark-runtime-4.1_2.12` | Iceberg catalog and table format integration (build from [apache/iceberg](https://github.com/apache/iceberg) main) |
 
 ## Python vs SQL
 
