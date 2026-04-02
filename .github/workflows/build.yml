@@ -77,3 +77,25 @@ jobs:
     - name: Run Clippy
       working-directory: iceberg-rust
       run: cargo clippy -- -D warnings
+
+  lint-spark:
+    runs-on: ubuntu-latest
+    name: Lint Spark Examples
+    permissions:
+      contents: read
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v6
+
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+
+    - name: Install Ruff
+      run: pip install ruff
+
+    - name: Lint with Ruff
+      working-directory: iceberg-spark
+      run: ruff check .

@@ -9,6 +9,7 @@ multiple languages.
 |-----------|----------|-------------|
 | [`iceberg-java/`](iceberg-java/) | Java | Examples using the Apache Iceberg Java API (including Apache Beam) |
 | [`iceberg-rust/`](iceberg-rust/) | Rust | Examples using the Apache Iceberg Rust API |
+| [`iceberg-spark/`](iceberg-spark/) | Python / SQL | Spark 4.1 Declarative Pipelines with Apache Iceberg (`@materialized_view`, `@table`, `@flow`) |
 
 ## Learning Resources
 
@@ -17,6 +18,8 @@ multiple languages.
 - [Apache Iceberg Rust Documentation](https://rust.iceberg.apache.org/)
 - [Apache Beam IcebergIO Documentation](https://beam.apache.org/documentation/io/built-in/iceberg/)
 - [Iceberg Table Format Specification](https://iceberg.apache.org/spec/)
+- [Spark Declarative Pipelines Programming Guide](https://spark.apache.org/docs/latest/declarative-pipelines-programming-guide.html)
+- [Apache Iceberg Spark Integration](https://iceberg.apache.org/docs/latest/spark-getting-started/)
 
 ## License
 
