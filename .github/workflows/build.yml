@@ -99,3 +99,34 @@ jobs:
     - name: Lint with Ruff
       working-directory: iceberg-spark
       run: ruff check .
+
+  build-scala:
+    runs-on: ubuntu-latest
+    name: Build Scala Examples
+    permissions:
+      contents: read
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v6
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v5
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+
+    - name: Cache SBT dependencies
+      uses: actions/cache@v5
+      with:
+        path: |
+          ~/.ivy2/cache
+          ~/.sbt
+          iceberg-scala/target
+        key: ${{ runner.os }}-sbt-${{ hashFiles('iceberg-scala/build.sbt', 'iceberg-scala/project/build.properties') }}
+        restore-keys: |
+          ${{ runner.os }}-sbt-
+
+    - name: Compile Scala examples
+      working-directory: iceberg-scala
+      run: sbt compile

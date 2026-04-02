@@ -9,6 +9,7 @@ multiple languages.
 |-----------|----------|-------------|
 | [`iceberg-java/`](iceberg-java/) | Java | Examples using the Apache Iceberg Java API (including Apache Beam) |
 | [`iceberg-rust/`](iceberg-rust/) | Rust | Examples using the Apache Iceberg Rust API |
+| [`iceberg-scala/`](iceberg-scala/) | Scala | Spark + Iceberg batch pipeline using the Spark Scala API (CTAS writes, partitioning, time travel) |
 | [`iceberg-spark/`](iceberg-spark/) | Python / SQL | Spark 4.1 Declarative Pipelines with Apache Iceberg (`@materialized_view`, `@table`, `@flow`) |
 
 ## Learning Resources
