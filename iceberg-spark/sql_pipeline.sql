@@ -6,11 +6,11 @@
 -- using Apache Iceberg tables.  It is the SQL equivalent of the Python
 -- pipelines defined in batch_pipeline.py and streaming_pipeline.py.
 --
--- Run this pipeline with:
+-- Run this pipeline with (build the JAR from apache/iceberg main first – see README.md):
 --
 --   spark-pipelines run \
 --       --pipeline-file sql_pipeline.sql \
---       --pipeline-conf spark.jars=iceberg-spark-runtime-4.1_2.12-1.8.1.jar \
+--       --pipeline-conf spark.jars=/path/to/iceberg/iceberg-spark/iceberg-spark-runtime-4.1_2.13/build/libs/iceberg-spark-runtime-4.1_2.13-*-SNAPSHOT.jar \
 --       --pipeline-conf spark.sql.catalog.local=org.apache.iceberg.spark.SparkCatalog \
 --       --pipeline-conf spark.sql.catalog.local.type=hadoop \
 --       --pipeline-conf spark.sql.catalog.local.warehouse=/tmp/iceberg-spark-example \

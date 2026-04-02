@@ -28,14 +28,14 @@ exists yet)::
 
     git clone https://github.com/apache/iceberg.git
     cd iceberg
-    ./gradlew :iceberg-spark:iceberg-spark-runtime-4.1_2.12:shadowJar
-    # JAR: iceberg-spark/iceberg-spark-runtime-4.1_2.12/build/libs/iceberg-spark-runtime-4.1_2.12-*-SNAPSHOT.jar
+    ./gradlew :iceberg-spark:iceberg-spark-runtime-4.1_2.13:shadowJar
+    # JAR: iceberg-spark/iceberg-spark-runtime-4.1_2.13/build/libs/iceberg-spark-runtime-4.1_2.13-*-SNAPSHOT.jar
 
 Run the pipeline::
 
     spark-pipelines run \\
         --pipeline-file batch_pipeline.py \\
-        --pipeline-conf spark.jars=/path/to/iceberg/iceberg-spark/iceberg-spark-runtime-4.1_2.12/build/libs/iceberg-spark-runtime-4.1_2.12-*-SNAPSHOT.jar \\
+        --pipeline-conf spark.jars=/path/to/iceberg/iceberg-spark/iceberg-spark-runtime-4.1_2.13/build/libs/iceberg-spark-runtime-4.1_2.13-*-SNAPSHOT.jar \\
         --pipeline-conf spark.sql.catalog.local=org.apache.iceberg.spark.SparkCatalog \\
         --pipeline-conf spark.sql.catalog.local.type=hadoop \\
         --pipeline-conf spark.sql.catalog.local.warehouse=/tmp/iceberg-spark-example \\

@@ -34,13 +34,13 @@ Build the Iceberg Spark 4.1 runtime JAR from source (no Maven Central release ex
 ```bash
 git clone https://github.com/apache/iceberg.git
 cd iceberg
-./gradlew :iceberg-spark:iceberg-spark-runtime-4.1_2.12:shadowJar
+./gradlew :iceberg-spark:iceberg-spark-runtime-4.1_2.13:shadowJar
 ```
 
 The built JAR will be at:
 
 ```
-iceberg/iceberg-spark/iceberg-spark-runtime-4.1_2.12/build/libs/iceberg-spark-runtime-4.1_2.12-*-SNAPSHOT.jar
+iceberg/iceberg-spark/iceberg-spark-runtime-4.1_2.13/build/libs/iceberg-spark-runtime-4.1_2.13-*-SNAPSHOT.jar
 ```
 
 > **Note** — A released Iceberg runtime for Spark 4.1 will be published to Maven Central once
@@ -74,7 +74,7 @@ orders               (inline sample data as source)
 ```bash
 spark-pipelines run \
     --pipeline-file batch_pipeline.py \
-    --pipeline-conf spark.jars=/path/to/iceberg/iceberg-spark/iceberg-spark-runtime-4.1_2.12/build/libs/iceberg-spark-runtime-4.1_2.12-*-SNAPSHOT.jar \
+    --pipeline-conf spark.jars=/path/to/iceberg/iceberg-spark/iceberg-spark-runtime-4.1_2.13/build/libs/iceberg-spark-runtime-4.1_2.13-*-SNAPSHOT.jar \
     --pipeline-conf spark.sql.catalog.local=org.apache.iceberg.spark.SparkCatalog \
     --pipeline-conf spark.sql.catalog.local.type=hadoop \
     --pipeline-conf spark.sql.catalog.local.warehouse=/tmp/iceberg-spark-example \
@@ -118,7 +118,7 @@ humidity_readings     (@flow)  ─┘        └── sensor_hourly_stats  (@ma
 ```bash
 spark-pipelines run \
     --pipeline-file streaming_pipeline.py \
-    --pipeline-conf spark.jars=/path/to/iceberg/iceberg-spark/iceberg-spark-runtime-4.1_2.12/build/libs/iceberg-spark-runtime-4.1_2.12-*-SNAPSHOT.jar \
+    --pipeline-conf spark.jars=/path/to/iceberg/iceberg-spark/iceberg-spark-runtime-4.1_2.13/build/libs/iceberg-spark-runtime-4.1_2.13-*-SNAPSHOT.jar \
     --pipeline-conf spark.sql.catalog.local=org.apache.iceberg.spark.SparkCatalog \
     --pipeline-conf spark.sql.catalog.local.type=hadoop \
     --pipeline-conf spark.sql.catalog.local.warehouse=/tmp/iceberg-spark-example \
@@ -145,7 +145,7 @@ SQL equivalents of both pipelines above, using the declarative SQL syntax:
 ```bash
 spark-pipelines run \
     --pipeline-file sql_pipeline.sql \
-    --pipeline-conf spark.jars=/path/to/iceberg/iceberg-spark/iceberg-spark-runtime-4.1_2.12/build/libs/iceberg-spark-runtime-4.1_2.12-*-SNAPSHOT.jar \
+    --pipeline-conf spark.jars=/path/to/iceberg/iceberg-spark/iceberg-spark-runtime-4.1_2.13/build/libs/iceberg-spark-runtime-4.1_2.13-*-SNAPSHOT.jar \
     --pipeline-conf spark.sql.catalog.local=org.apache.iceberg.spark.SparkCatalog \
     --pipeline-conf spark.sql.catalog.local.type=hadoop \
     --pipeline-conf spark.sql.catalog.local.warehouse=/tmp/iceberg-spark-example \
@@ -168,7 +168,7 @@ iceberg-spark/
 | Package / JAR | Purpose |
 |---------------|---------|
 | `pyspark[pipelines]==4.1.*` | Spark engine + `spark-pipelines` CLI |
-| `iceberg-spark-runtime-4.1_2.12` | Iceberg catalog and table format integration (build from [apache/iceberg](https://github.com/apache/iceberg) main) |
+| `iceberg-spark-runtime-4.1_2.13` | Iceberg catalog and table format integration (build from [apache/iceberg](https://github.com/apache/iceberg) main) |
 
 ## Python vs SQL
 
