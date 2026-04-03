@@ -1,7 +1,7 @@
 plugins {
   id 'java'
   id 'application'
-  id 'com.diffplug.spotless' version '6.23.3'
+  id 'com.diffplug.spotless' version '8.4.0'
 }
 
 group = 'io.github.manuzhang'
@@ -47,7 +47,7 @@ dependencies {
   implementation 'org.slf4j:slf4j-simple:2.0.17'
 
   // Testing
-  testImplementation 'org.junit.jupiter:junit-jupiter:5.10.0'
+  testImplementation 'org.junit.jupiter:junit-jupiter:6.0.3'
   testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
