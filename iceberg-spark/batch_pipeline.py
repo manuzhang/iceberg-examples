@@ -21,6 +21,10 @@ How to run
 
 Install PySpark with pipeline support::
 
+    pip install -r requirements.txt
+
+or directly::
+
     pip install "pyspark[pipelines]==4.1.*"
 
 Build the Iceberg Spark 4.1 runtime JAR from source (no Maven Central release

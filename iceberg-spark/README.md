@@ -23,7 +23,13 @@ transactions, schema evolution, and time-travel queries.
 - **Python 3.11** or higher
 - **Apache Spark 4.1** with pipeline support
 
-Install the PySpark package (includes the `spark-pipelines` CLI)::
+Install the PySpark package (includes the `spark-pipelines` CLI):
+
+```bash
+pip install -r requirements.txt
+```
+
+or directly:
 
 ```bash
 pip install "pyspark[pipelines]==4.1.*"
@@ -158,6 +164,7 @@ spark-pipelines run \
 ```
 iceberg-spark/
 ├── README.md                # This file
+├── requirements.txt         # Python dependencies (pip install -r requirements.txt)
 ├── batch_pipeline.py        # Batch pipeline: @materialized_view (Python)
 ├── streaming_pipeline.py    # Streaming pipeline: @table + @flow (Python)
 └── sql_pipeline.sql         # SQL equivalents for both pipelines
