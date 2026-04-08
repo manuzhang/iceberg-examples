@@ -17,7 +17,7 @@ repositories {
 }
 
 def beamVersion = '2.72.0'
-def hadoopVersion = '3.4.3'
+def hadoopVersion = '3.5.0'
 
 configurations.all {
   // Resolve logging conflicts: prefer slf4j-simple (set at runtime)
