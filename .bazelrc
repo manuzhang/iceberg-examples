@@ -1,0 +1,14 @@
+# Bazel configuration for the iceberg-examples polyglot workspace.
+
+# Bzlmod is enabled by default in Bazel 7+; keep this explicit for clarity.
+common --enable_bzlmod
+
+# Java toolchain: require Java 17 for compilation and tool invocations.
+build --java_language_version=17
+build --tool_java_language_version=17
+
+# Rust: suppress compiler warnings during examples build (optional).
+build --@rules_rust//:extra_rustc_flags=-Awarnings
+
+# Test output: show stdout/stderr on failure.
+test --test_output=errors

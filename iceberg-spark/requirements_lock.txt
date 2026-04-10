@@ -1,0 +1,17 @@
+# Pinned requirements lock file for iceberg-spark (PySpark Declarative Pipelines).
+#
+# IMPORTANT: This file must be regenerated whenever requirements.txt changes.
+# Run the following command from the repository root to regenerate:
+#
+#   pip-compile iceberg-spark/requirements.txt \
+#       --output-file iceberg-spark/requirements_lock.txt \
+#       --generate-hashes
+#
+# If pip-compile is not installed, install it with:
+#   pip install pip-tools
+#
+# NOTE: The Iceberg runtime JAR (iceberg-spark-runtime) is NOT a pip package.
+# It must be provided separately at Spark job submission time via --packages or
+# --jars.  See iceberg-spark/README.md for instructions.
+
+pyspark[pipelines]==4.1.0

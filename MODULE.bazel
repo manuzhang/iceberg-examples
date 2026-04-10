@@ -1,0 +1,110 @@
+"""
+Bazel MODULE.bazel for the iceberg-examples polyglot workspace.
+
+This workspace unifies:
+  - iceberg-java  (Apache Beam + Iceberg, built with rules_java + rules_jvm_external)
+  - iceberg-rust  (Iceberg Rust crate, built with rules_rust)
+  - iceberg-spark (PySpark Declarative Pipelines, built with rules_python)
+
+Run `bazel build //...` to build all sub-projects.
+Run `bazel test //...`  to run all tests.
+"""
+
+module(
+    name = "iceberg_examples",
+    version = "0.0.0",
+)
+
+# ---------------------------------------------------------------------------
+# Java — rules_java (bundled in Bazel 7+) + rules_jvm_external for Maven deps
+# ---------------------------------------------------------------------------
+
+bazel_dep(name = "rules_java", version = "8.5.1")
+bazel_dep(name = "rules_jvm_external", version = "6.7")
+
+# JUnit 5 test support via contrib_rules_jvm (provides java_junit5_test).
+bazel_dep(name = "contrib_rules_jvm", version = "0.30.0")
+
+maven = use_extension("@rules_jvm_external//:extensions.bzl", "maven")
+maven.install(
+    name = "maven",
+    artifacts = [
+        # Apache Iceberg core
+        "org.apache.iceberg:iceberg-api:1.10.1",
+        "org.apache.iceberg:iceberg-core:1.10.1",
+
+        # Apache Beam SDK + IcebergIO connector
+        "org.apache.beam:beam-sdks-java-core:2.72.0",
+        "org.apache.beam:beam-sdks-java-io-iceberg:2.72.0",
+
+        # Apache Hadoop (required for HadoopCatalog)
+        "org.apache.hadoop:hadoop-common:3.4.3",
+
+        # Beam DirectRunner (runtime only — no cluster required)
+        "org.apache.beam:beam-runners-direct-java:2.72.0",
+
+        # Logging
+        "org.slf4j:slf4j-simple:2.0.17",
+
+        # JUnit 5 (Jupiter) — test scope.
+        # junit-jupiter is the aggregator BOM that brings in junit-jupiter-api,
+        # junit-jupiter-engine and junit-jupiter-params as transitive deps.
+        "org.junit.jupiter:junit-jupiter:6.0.3",
+        "org.junit.platform:junit-platform-launcher:2.0.3",
+    ],
+    repositories = [
+        "https://repo1.maven.org/maven2",
+    ],
+    excluded_artifacts = [
+        # Avoid logging conflicts; slf4j-simple is used instead.
+        "org.slf4j:slf4j-log4j12",
+        "org.slf4j:slf4j-reload4j",
+        "log4j:log4j",
+    ],
+    # After the first successful build, generate a deterministic lock file with:
+    #   REPIN=1 bazel run @maven//:pin
+    # Then add lock_file = "//:maven_install.json" here and check in the
+    # generated maven_install.json for reproducible builds.
+)
+use_repo(maven, "maven")
+
+# ---------------------------------------------------------------------------
+# Rust — rules_rust + crates_repository mirroring Cargo.toml
+# ---------------------------------------------------------------------------
+
+bazel_dep(name = "rules_rust", version = "0.57.0")
+
+rust = use_extension("@rules_rust//rust:extensions.bzl", "rust")
+rust.toolchain(edition = "2021")
+use_repo(rust, "rust_toolchains")
+
+register_toolchains("@rust_toolchains//:all")
+
+crate = use_extension("@rules_rust//crate_universe:extension.bzl", "crate")
+crate.from_cargo(
+    name = "crate_index",
+    cargo_lockfile = "//iceberg-rust:Cargo.lock",
+    manifests = ["//iceberg-rust:Cargo.toml"],
+)
+use_repo(crate, "crate_index")
+
+# ---------------------------------------------------------------------------
+# Python — rules_python + pip for PySpark dependencies
+# ---------------------------------------------------------------------------
+
+bazel_dep(name = "rules_python", version = "1.4.1")
+
+python = use_extension("@rules_python//python/extensions:python.bzl", "python")
+python.toolchain(python_version = "3.11")
+use_repo(python, "python_3_11")
+
+pip = use_extension("@rules_python//python/extensions:pip.bzl", "pip")
+pip.parse(
+    hub_name = "iceberg_spark_deps",
+    python_version = "3.11",
+    # Pinned requirements file.  To regenerate:
+    #   pip-compile iceberg-spark/requirements.txt \
+    #       -o iceberg-spark/requirements_lock.txt
+    requirements_lock = "//iceberg-spark:requirements_lock.txt",
+)
+use_repo(pip, "iceberg_spark_deps")
