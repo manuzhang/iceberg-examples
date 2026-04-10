@@ -1,15 +1,14 @@
 """
 Bazel BUILD file for iceberg-spark.
 
-PySpark dependencies are resolved via the `iceberg_spark_deps` pip hub
-declared in MODULE.bazel.  Generate or update the lock file with:
+The PySpark runtime is provided by the Spark cluster at job submission time and
+is therefore NOT declared as a Bazel build-time dependency.  The py_binary
+targets below package the pipeline source so that `bazel build //iceberg-spark/...`
+validates Python syntax and produces runnable wrappers.
 
-  pip-compile iceberg-spark/requirements.txt \\
-      --output-file iceberg-spark/requirements_lock.txt \\
-      --generate-hashes
-
-NOTE: The Iceberg Spark runtime JAR is not available as a pip package and
-must be supplied at Spark job submission time.  See README.md for details.
+To submit a pipeline to a Spark cluster, supply pyspark via:
+  --packages org.apache.iceberg:iceberg-spark-runtime-<version>
+or pass PYSPARK_PYTHON / spark-submit --py-files as appropriate.
 
 Targets
 -------
@@ -18,15 +17,12 @@ Targets
   :all_pipelines      — filegroup collecting both binaries
 """
 
-load("@iceberg_spark_deps//:requirements.bzl", "requirement")
-
 py_binary(
     name = "batch_pipeline",
     srcs = ["batch_pipeline.py"],
     main = "batch_pipeline.py",
     python_version = "PY3",
     visibility = ["//visibility:public"],
-    deps = [requirement("pyspark")],
 )
 
 py_binary(
@@ -35,7 +31,6 @@ py_binary(
     main = "streaming_pipeline.py",
     python_version = "PY3",
     visibility = ["//visibility:public"],
-    deps = [requirement("pyspark")],
 )
 
 # Convenience target: build both pipelines at once.

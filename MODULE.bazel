@@ -49,8 +49,8 @@ maven.install(
         # JUnit 5 (Jupiter) — test scope.
         # junit-jupiter is the aggregator BOM that brings in junit-jupiter-api,
         # junit-jupiter-engine and junit-jupiter-params as transitive deps.
-        "org.junit.jupiter:junit-jupiter:6.0.3",
-        "org.junit.platform:junit-platform-launcher:2.0.3",
+        "org.junit.jupiter:junit-jupiter:5.12.2",
+        "org.junit.platform:junit-platform-launcher:1.12.2",
     ],
     repositories = [
         "https://repo1.maven.org/maven2",
@@ -72,10 +72,13 @@ use_repo(maven, "maven")
 # Rust — rules_rust + crates_repository mirroring Cargo.toml
 # ---------------------------------------------------------------------------
 
-bazel_dep(name = "rules_rust", version = "0.57.0")
+bazel_dep(name = "rules_rust", version = "0.69.0")
 
 rust = use_extension("@rules_rust//rust:extensions.bzl", "rust")
-rust.toolchain(edition = "2021")
+rust.toolchain(
+    edition = "2021",
+    versions = ["1.85.0"],
+)
 use_repo(rust, "rust_toolchains")
 
 register_toolchains("@rust_toolchains//:all")
@@ -89,7 +92,7 @@ crate.from_cargo(
 use_repo(crate, "crate_index")
 
 # ---------------------------------------------------------------------------
-# Python — rules_python + pip for PySpark dependencies
+# Python — rules_python for PySpark pipelines (syntax/lint only via py_binary)
 # ---------------------------------------------------------------------------
 
 bazel_dep(name = "rules_python", version = "1.4.1")
@@ -97,14 +100,3 @@ bazel_dep(name = "rules_python", version = "1.4.1")
 python = use_extension("@rules_python//python/extensions:python.bzl", "python")
 python.toolchain(python_version = "3.11")
 use_repo(python, "python_3_11")
-
-pip = use_extension("@rules_python//python/extensions:pip.bzl", "pip")
-pip.parse(
-    hub_name = "iceberg_spark_deps",
-    python_version = "3.11",
-    # Pinned requirements file.  To regenerate:
-    #   pip-compile iceberg-spark/requirements.txt \
-    #       -o iceberg-spark/requirements_lock.txt
-    requirements_lock = "//iceberg-spark:requirements_lock.txt",
-)
-use_repo(pip, "iceberg_spark_deps")
