@@ -1,0 +1,12 @@
+package(default_visibility = ["//visibility:public"])
+
+filegroup(
+    name = "repo_files",
+    srcs = [
+        "//iceberg-java:files",
+        "//iceberg-rust:files",
+        "//iceberg-spark:files",
+        "README.md",
+        "LICENSE",
+    ],
+)

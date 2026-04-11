@@ -1,0 +1,11 @@
+package(default_visibility = ["//visibility:public"])
+
+filegroup(
+    name = "files",
+    srcs = [
+        "README.md",
+        "batch_pipeline.py",
+        "streaming_pipeline.py",
+        "sql_pipeline.sql",
+    ],
+)

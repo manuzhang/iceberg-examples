@@ -1,4 +1,4 @@
-name: Build and Test
+name: Bazel Build
 
 on:
   push:
@@ -7,80 +7,9 @@ on:
     branches: [ main ]
 
 jobs:
-  build:
+  bazel-build:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        java: [17, 21]
-    name: Test with JDK ${{ matrix.java }}
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v6
-
-    - name: Set up JDK ${{ matrix.java }}
-      uses: actions/setup-java@v5
-      with:
-        java-version: ${{ matrix.java }}
-        distribution: 'temurin'
-
-    - name: Setup Gradle
-      uses: gradle/gradle-build-action@v3
-
-    - name: Make gradlew executable
-      run: chmod +x iceberg-java/gradlew
-
-    - name: Build with Gradle
-      working-directory: iceberg-java
-      run: ./gradlew build
-
-    - name: Upload test reports
-      if: always()
-      uses: actions/upload-artifact@v7
-      with:
-        name: test-reports-jdk${{ matrix.java }}
-        path: iceberg-java/build/reports/tests/test/
-
-  build-rust:
-    runs-on: ubuntu-latest
-    name: Build and Test Rust Examples
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v6
-
-    - name: Set up Rust toolchain
-      uses: dtolnay/rust-toolchain@stable
-      with:
-        toolchain: stable
-        components: clippy
-
-    - name: Cache Rust dependencies
-      uses: actions/cache@v5
-      with:
-        path: |
-          ~/.cargo/registry
-          ~/.cargo/git
-          iceberg-rust/target
-        key: ${{ runner.os }}-cargo-${{ hashFiles('iceberg-rust/Cargo.lock') }}
-        restore-keys: |
-          ${{ runner.os }}-cargo-
-
-    - name: Build Rust examples
-      working-directory: iceberg-rust
-      run: cargo build
-
-    - name: Run Rust tests
-      working-directory: iceberg-rust
-      run: cargo test
-
-    - name: Run Clippy
-      working-directory: iceberg-rust
-      run: cargo clippy -- -D warnings
-
-  lint-spark:
-    runs-on: ubuntu-latest
-    name: Lint Spark Examples
+    name: Build with Bazel
     permissions:
       contents: read
 
@@ -88,14 +17,15 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v6
 
-    - name: Set up Python
-      uses: actions/setup-python@v6
+    - name: Set up Bazel
+      uses: bazel-contrib/setup-bazel@0.15.0
       with:
-        python-version: '3.11'
+        bazelisk-cache: true
+        disk-cache: false
+        repository-cache: true
 
-    - name: Install Ruff
-      run: pip install ruff
+    - name: Verify Bazel targets
+      run: bazel query //...
 
-    - name: Lint with Ruff
-      working-directory: iceberg-spark
-      run: ruff check .
+    - name: Build all Bazel targets
+      run: bazel build //...

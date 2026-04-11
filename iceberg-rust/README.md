@@ -28,7 +28,6 @@ curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
 ### Build
 
 ```bash
-cd iceberg-rust
 cargo build
 ```
 
@@ -80,7 +79,6 @@ cargo test
 
 ```
 iceberg-rust/
-├── Cargo.toml
 └── src/
     ├── main.rs               # Entry point, runs all examples
     ├── schema_examples.rs    # Schema creation and field inspection

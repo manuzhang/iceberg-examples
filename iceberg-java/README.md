@@ -14,42 +14,42 @@ Apache Iceberg is an open table format for huge analytic datasets. This project 
 ## Prerequisites
 
 - Java 17 or higher
-- Gradle 8.5 or higher (included via wrapper)
+- A local Gradle installation if you want to compile/run these examples
 
 ## Getting Started
 
 ### Build the Project
 
 ```bash
-./gradlew build
+gradle build
 ```
 
 ### Run Examples
 
 Run the main examples class:
 ```bash
-./gradlew run
+gradle run
 ```
 
 Run specific example classes:
 ```bash
 # Data operations example
-./gradlew runDataOperations
+gradle runDataOperations
 
 # Schema evolution example
-./gradlew runSchemaEvolution
+gradle runSchemaEvolution
 
 # Table format v3 example
-./gradlew runTableFormatV3
+gradle runTableFormatV3
 
 # Apache Beam + Iceberg example
-./gradlew runBeamExample
+gradle runBeamExample
 ```
 
 ### Run Tests
 
 ```bash
-./gradlew test
+gradle test
 ```
 
 ## Examples Included
