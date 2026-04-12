@@ -1,0 +1,25 @@
+load("@rules_python//python:py_library.bzl", "py_library")
+load("@rules_python//python:py_test.bzl", "py_test")
+
+package(default_visibility = ["//visibility:public"])
+
+py_library(
+    name = "spark_examples",
+    srcs = [
+        "batch_pipeline.py",
+        "streaming_pipeline.py",
+    ],
+    imports = ["."],
+)
+
+py_test(
+    name = "spark_examples_smoke_test",
+    srcs = [
+        "smoke_test.py",
+        "batch_pipeline.py",
+        "streaming_pipeline.py",
+    ],
+    main = "smoke_test.py",
+)
+
+exports_files(["sql_pipeline.sql"])

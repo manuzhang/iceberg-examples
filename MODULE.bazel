@@ -1,0 +1,60 @@
+module(
+    name = "iceberg_examples",
+    version = "0.1.0",
+)
+
+bazel_dep(name = "rules_jvm_external", version = "6.8")
+bazel_dep(name = "rules_python", version = "1.6.3")
+bazel_dep(name = "rules_rust", version = "0.69.0")
+
+maven = use_extension("@rules_jvm_external//:extensions.bzl", "maven")
+maven.install(
+    artifacts = [
+        "junit:junit:4.13.2",
+        "org.apache.beam:beam-runners-direct-java:2.72.0",
+        "org.apache.beam:beam-sdks-java-core:2.72.0",
+        "org.apache.beam:beam-sdks-java-io-iceberg:2.72.0",
+        "org.apache.hadoop:hadoop-common:3.4.3",
+        "org.apache.iceberg:iceberg-api:1.10.1",
+        "org.apache.iceberg:iceberg-core:1.10.1",
+        "org.apache.iceberg:iceberg-data:1.10.1",
+        "org.slf4j:slf4j-simple:2.0.17",
+    ],
+    repositories = ["https://repo1.maven.org/maven2"],
+)
+use_repo(maven, "maven")
+
+python = use_extension("@rules_python//python/extensions:python.bzl", "python")
+python.toolchain(
+    python_version = "3.11",
+)
+use_repo(python, "python_3_11")
+
+pip = use_extension("@rules_python//python/extensions:pip.bzl", "pip")
+pip.parse(
+    hub_name = "pypi",
+    python_version = "3.11",
+    requirements_lock = "//third_party/pip:requirements_lock.txt",
+)
+use_repo(pip, "pypi")
+
+rust = use_extension("@rules_rust//rust:extensions.bzl", "rust")
+rust.toolchain(
+    edition = "2021",
+    versions = ["1.92.0"],
+)
+use_repo(rust, "rust_toolchains")
+register_toolchains("@rust_toolchains//:all")
+
+crate = use_extension("@rules_rust//crate_universe:extensions.bzl", "crate")
+crate.spec(package = "iceberg", version = "0.9.0")
+crate.spec(
+    package = "tokio",
+    version = "1",
+    features = [
+        "macros",
+        "rt-multi-thread",
+    ],
+)
+crate.from_specs(name = "crates")
+use_repo(crate, "crates")

@@ -1,9 +1,8 @@
-# Rust
-iceberg-rust/target/
-
-# Gradle
-.gradle/
-build/
+# Bazel
+/bazel-*
+/bazel-bin
+/bazel-out
+/bazel-testlogs
 
 # IDE files
 .idea/
@@ -26,16 +25,14 @@ Thumbs.db
 *.tar.gz
 *.rar
 
-# But include gradle wrapper
-!iceberg-java/gradle/wrapper/gradle-wrapper.jar
-!iceberg-java/gradle/wrapper/gradle-wrapper.properties
-
 # Log files
 *.log
 
 # Temporary files
 tmp/
 temp/
+__pycache__/
+*.pyc
 
 # Test outputs
 **/test-output/

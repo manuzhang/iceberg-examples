@@ -1,12 +1,12 @@
 # Apache Iceberg Rust Examples
 
-A collection of examples demonstrating the [Apache Iceberg Rust API](https://crates.io/crates/iceberg) for
-table format operations, schema definition, data types, and catalog management.
+A collection of examples demonstrating the [Apache Iceberg Rust API](https://crates.io/crates/iceberg)
+for table format operations, schema definition, data types, and catalog management.
 
 ## Overview
 
-The [`iceberg`](https://crates.io/crates/iceberg) crate is the official native Rust implementation of
-Apache Iceberg. These examples cover:
+The [`iceberg`](https://crates.io/crates/iceberg) crate is the official native Rust implementation
+of Apache Iceberg. These examples cover:
 
 - Defining and inspecting table schemas
 - Working with Iceberg's rich type system
@@ -16,32 +16,26 @@ Apache Iceberg. These examples cover:
 ## Prerequisites
 
 - Rust 1.92 or higher (required by `iceberg` 0.9.0)
-
-Install Rust via [rustup](https://rustup.rs/):
-
-```bash
-curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
-```
+- Bazel 8.4.0 or higher, or Bazelisk
 
 ## Getting Started
 
 ### Build
 
 ```bash
-cd iceberg-rust
-cargo build
+bazel build //iceberg-rust:iceberg_rust_examples
 ```
 
 ### Run Examples
 
 ```bash
-cargo run
+bazel run //iceberg-rust:iceberg_rust_examples
 ```
 
 ### Run Tests
 
 ```bash
-cargo test
+bazel test //iceberg-rust:iceberg_rust_test
 ```
 
 ## Examples Included
@@ -55,18 +49,16 @@ cargo test
 
 ### 2. Data Types (`data_types.rs`)
 
-- All 14 primitive types: `boolean`, `int`, `long`, `float`, `double`,
-  `decimal(P,S)`, `date`, `time`, `timestamp`, `timestamptz`, `string`,
-  `uuid`, `fixed(N)`, `binary`
+- All 14 primitive types
 - Nested types: `list`, `map`, and `struct`
-- Deeply nested types (e.g. `list<struct<…>>`)
+- Deeply nested types such as `list<struct<...>>`
 
 ### 3. Schema Evolution (`schema_evolution.rs`)
 
 - Adding optional columns while keeping existing data readable
-- Safe type promotions (`int → long`, `float → double`)
+- Safe type promotions
 - Field ID stability across schema versions
-- Schema evolution rules: what is and isn't allowed
+- Schema evolution rules
 
 ### 4. Catalog Operations (`catalog_examples.rs`)
 
@@ -78,10 +70,11 @@ cargo test
 
 ## Project Structure
 
-```
+```text
 iceberg-rust/
-├── Cargo.toml
+├── BUILD.bazel
 └── src/
+    ├── lib.rs                # Shared library used by tests and the runnable binary
     ├── main.rs               # Entry point, runs all examples
     ├── schema_examples.rs    # Schema creation and field inspection
     ├── data_types.rs         # Primitive and nested type demonstrations
@@ -90,6 +83,8 @@ iceberg-rust/
 ```
 
 ## Key Dependencies
+
+These dependencies are resolved through Bazel's Rust crate integration:
 
 | Crate | Version | Purpose |
 |-------|---------|---------|
@@ -102,14 +97,3 @@ iceberg-rust/
 - [iceberg crate on crates.io](https://crates.io/crates/iceberg)
 - [iceberg-rust GitHub repository](https://github.com/apache/iceberg-rust)
 - [Apache Iceberg Table Format Specification](https://iceberg.apache.org/spec/)
-
-## Notes
-
-These examples use an **in-memory catalog** (`MemoryCatalogBuilder` + `MemoryStorageFactory`) which
-requires no external infrastructure. For production use you would add:
-
-- A persistent catalog: REST, Hive Metastore, AWS Glue, or SQL-backed
-- A storage backend: S3, GCS, Azure ADLS, or local filesystem
-  (via [`iceberg-storage-opendal`](https://crates.io/crates/iceberg-storage-opendal))
-- A compute integration: Apache DataFusion
-  (via [`iceberg-datafusion`](https://crates.io/crates/iceberg-datafusion))

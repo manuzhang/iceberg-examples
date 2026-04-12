@@ -1,0 +1,24 @@
+common --enable_bzlmod
+build --java_language_version=17
+build --java_runtime_version=remotejdk_17
+build --tool_java_language_version=17
+build --tool_java_runtime_version=remotejdk_17
+test --test_output=errors
+
+build:jdk17 --java_language_version=17
+build:jdk17 --java_runtime_version=remotejdk_17
+build:jdk17 --tool_java_language_version=17
+build:jdk17 --tool_java_runtime_version=remotejdk_17
+test:jdk17 --java_language_version=17
+test:jdk17 --java_runtime_version=remotejdk_17
+test:jdk17 --tool_java_language_version=17
+test:jdk17 --tool_java_runtime_version=remotejdk_17
+
+build:jdk21 --java_language_version=21
+build:jdk21 --java_runtime_version=remotejdk_21
+build:jdk21 --tool_java_language_version=21
+build:jdk21 --tool_java_runtime_version=remotejdk_21
+test:jdk21 --java_language_version=21
+test:jdk21 --java_runtime_version=remotejdk_21
+test:jdk21 --tool_java_language_version=21
+test:jdk21 --tool_java_runtime_version=remotejdk_21

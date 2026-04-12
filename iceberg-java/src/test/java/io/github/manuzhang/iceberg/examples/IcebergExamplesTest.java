@@ -1,30 +1,33 @@
 package io.github.manuzhang.iceberg.examples;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import org.apache.iceberg.Schema;
 import org.apache.iceberg.types.EdgeAlgorithm;
 import org.apache.iceberg.types.Types;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Test;
+import org.junit.Before;
+import org.junit.Test;
 
 /**
  * Unit tests for Iceberg examples. These tests demonstrate basic functionality without requiring
  * external dependencies.
  */
-class IcebergExamplesTest {
+public class IcebergExamplesTest {
 
   private IcebergExamples examples;
 
-  @BeforeEach
-  void setUp() {
+  @Before
+  public void setUp() {
     examples = new IcebergExamples();
   }
 
   @Test
-  @DisplayName("Test basic schema creation")
-  void testSchemaCreation() {
+  public void testSchemaCreation() {
     // Create a test schema
     Schema schema =
         new Schema(
@@ -43,8 +46,7 @@ class IcebergExamplesTest {
   }
 
   @Test
-  @DisplayName("Test schema field types")
-  void testSchemaFieldTypes() {
+  public void testSchemaFieldTypes() {
     Schema schema =
         new Schema(
             Types.NestedField.required(1, "id", Types.LongType.get()),
@@ -62,8 +64,7 @@ class IcebergExamplesTest {
   }
 
   @Test
-  @DisplayName("Test schema evolution concepts")
-  void testSchemaEvolution() {
+  public void testSchemaEvolution() {
     // Initial schema
     Schema v1Schema =
         new Schema(
@@ -93,8 +94,7 @@ class IcebergExamplesTest {
   }
 
   @Test
-  @DisplayName("Test field ID uniqueness")
-  void testFieldIdUniqueness() {
+  public void testFieldIdUniqueness() {
     Schema schema =
         new Schema(
             Types.NestedField.required(1, "id", Types.LongType.get()),
@@ -109,15 +109,13 @@ class IcebergExamplesTest {
   }
 
   @Test
-  @DisplayName("Test examples class instantiation")
-  void testExamplesInstantiation() {
+  public void testExamplesInstantiation() {
     assertNotNull(examples);
     assertTrue(examples instanceof IcebergExamples);
   }
 
   @Test
-  @DisplayName("Test v3 nanosecond timestamp types")
-  void testTimestampNanoTypes() {
+  public void testTimestampNanoTypes() {
     Types.TimestampNanoType tsWithZone = Types.TimestampNanoType.withZone();
     Types.TimestampNanoType tsWithoutZone = Types.TimestampNanoType.withoutZone();
 
@@ -129,8 +127,7 @@ class IcebergExamplesTest {
   }
 
   @Test
-  @DisplayName("Test v3 variant type")
-  void testVariantType() {
+  public void testVariantType() {
     Types.VariantType variantType = Types.VariantType.get();
 
     assertNotNull(variantType);
@@ -139,8 +136,7 @@ class IcebergExamplesTest {
   }
 
   @Test
-  @DisplayName("Test v3 geospatial types")
-  void testGeospatialTypes() {
+  public void testGeospatialTypes() {
     Types.GeometryType geometryCrs84 = Types.GeometryType.crs84();
     Types.GeometryType geometryCustom = Types.GeometryType.of("EPSG:4326");
     Types.GeographyType geographyCrs84 = Types.GeographyType.crs84();
@@ -162,8 +158,7 @@ class IcebergExamplesTest {
   }
 
   @Test
-  @DisplayName("Test v3 default column values")
-  void testDefaultColumnValues() {
+  public void testDefaultColumnValues() {
     Types.NestedField fieldWithDefaults =
         Types.NestedField.optional("status")
             .withId(1)
@@ -179,8 +174,7 @@ class IcebergExamplesTest {
   }
 
   @Test
-  @DisplayName("Test v3 schema with new types and default values")
-  void testV3Schema() {
+  public void testV3Schema() {
     Schema v3Schema =
         new Schema(
             Types.NestedField.required(1, "id", Types.LongType.get()),
@@ -201,13 +195,11 @@ class IcebergExamplesTest {
   }
 
   @Test
-  @DisplayName("Test TableFormatV3Example class can be instantiated and run")
-  void testTableFormatV3Example() {
+  public void testTableFormatV3Example() {
     TableFormatV3Example v3Example = new TableFormatV3Example();
     assertNotNull(v3Example);
-    // Verify each method runs without exception
-    assertDoesNotThrow(v3Example::demonstrateV3DataTypes);
-    assertDoesNotThrow(v3Example::demonstrateDefaultValues);
-    assertDoesNotThrow(v3Example::demonstrateV3Schema);
+    v3Example.demonstrateV3DataTypes();
+    v3Example.demonstrateDefaultValues();
+    v3Example.demonstrateV3Schema();
   }
 }
