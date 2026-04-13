@@ -20,10 +20,9 @@
 //! Demonstrates schema definition, data types, schema evolution, and
 //! catalog operations using the [`iceberg`] crate.
 
-mod catalog_examples;
-mod data_types;
-mod schema_evolution;
-mod schema_examples;
+use iceberg_rust_examples::{
+    catalog_examples, data_types, schema_evolution, schema_examples,
+};
 
 #[tokio::main]
 async fn main() -> iceberg::Result<()> {

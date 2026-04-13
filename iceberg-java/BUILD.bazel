@@ -1,0 +1,71 @@
+package(default_visibility = ["//visibility:public"])
+
+java_library(
+    name = "lib",
+    srcs = glob(["src/main/java/**/*.java"]),
+    deps = [
+        "@maven//:org_apache_beam_beam_runners_direct_java",
+        "@maven//:org_apache_beam_beam_sdks_java_core",
+        "@maven//:org_apache_beam_beam_sdks_java_io_iceberg",
+        "@maven//:org_apache_hadoop_hadoop_common",
+        "@maven//:org_apache_iceberg_iceberg_api",
+        "@maven//:org_apache_iceberg_iceberg_core",
+        "@maven//:org_apache_iceberg_iceberg_data",
+        "@maven//:org_slf4j_slf4j_api",
+        "@maven//:org_slf4j_slf4j_simple",
+    ],
+)
+
+java_binary(
+    name = "iceberg_examples",
+    main_class = "io.github.manuzhang.iceberg.examples.IcebergExamples",
+    runtime_deps = [":lib"],
+)
+
+java_binary(
+    name = "data_operations_example",
+    main_class = "io.github.manuzhang.iceberg.examples.DataOperationsExample",
+    runtime_deps = [":lib"],
+)
+
+java_binary(
+    name = "schema_evolution_example",
+    main_class = "io.github.manuzhang.iceberg.examples.SchemaEvolutionExample",
+    runtime_deps = [":lib"],
+)
+
+java_binary(
+    name = "table_format_v3_example",
+    main_class = "io.github.manuzhang.iceberg.examples.TableFormatV3Example",
+    runtime_deps = [":lib"],
+)
+
+java_binary(
+    name = "beam_iceberg_example",
+    main_class = "io.github.manuzhang.iceberg.examples.BeamIcebergExample",
+    runtime_deps = [":lib"],
+)
+
+java_test(
+    name = "iceberg_examples_test",
+    srcs = ["src/test/java/io/github/manuzhang/iceberg/examples/IcebergExamplesTest.java"],
+    test_class = "io.github.manuzhang.iceberg.examples.IcebergExamplesTest",
+    deps = [
+        ":lib",
+        "@maven//:junit_junit",
+        "@maven//:org_apache_iceberg_iceberg_api",
+    ],
+)
+
+java_test(
+    name = "beam_iceberg_example_test",
+    srcs = ["src/test/java/io/github/manuzhang/iceberg/examples/BeamIcebergExampleTest.java"],
+    test_class = "io.github.manuzhang.iceberg.examples.BeamIcebergExampleTest",
+    deps = [
+        ":lib",
+        "@maven//:junit_junit",
+        "@maven//:org_apache_beam_beam_runners_direct_java",
+        "@maven//:org_apache_beam_beam_sdks_java_io_iceberg",
+        "@maven//:org_apache_iceberg_iceberg_api",
+    ],
+)

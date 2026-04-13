@@ -1,0 +1,32 @@
+load("@rules_rust//rust:defs.bzl", "rust_binary", "rust_library", "rust_test")
+
+package(default_visibility = ["//visibility:public"])
+
+rust_library(
+    name = "lib",
+    crate_name = "iceberg_rust_examples",
+    crate_root = "src/lib.rs",
+    srcs = glob(["src/**/*.rs"]),
+    edition = "2021",
+    deps = [
+        "@crates//:iceberg",
+        "@crates//:tokio",
+    ],
+)
+
+rust_binary(
+    name = "iceberg_rust_examples",
+    crate_root = "src/main.rs",
+    srcs = glob(["src/**/*.rs"]),
+    edition = "2021",
+    deps = [
+        ":lib",
+        "@crates//:iceberg",
+        "@crates//:tokio",
+    ],
+)
+
+rust_test(
+    name = "iceberg_rust_test",
+    crate = ":lib",
+)
