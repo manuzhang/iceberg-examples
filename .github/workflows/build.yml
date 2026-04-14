@@ -37,15 +37,11 @@ jobs:
           chmod +x "$HOME/.local/bin/bazel"
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
-
       - name: Show Bazel version
         run: bazel --version
 
       - name: Build all Bazel targets
         run: bazel build --config=${{ matrix.bazel_config }} //...
-
-      - name: Verify C++ example target builds
-        run: bazel build --config=${{ matrix.bazel_config }} //iceberg-cpp:iceberg_cpp_example
 
       - name: Run all Bazel tests
         run: bazel test --config=${{ matrix.bazel_config }} //...
