@@ -20,6 +20,11 @@ bazel build //iceberg-cpp:iceberg_cpp_example
 bazel run //iceberg-cpp:iceberg_cpp_example
 ```
 
+## Upstream reference
+
+For a fuller end-to-end native example (catalog registration and scanning), see
+[`apache/iceberg-cpp/example/demo_example.cc`](https://github.com/apache/iceberg-cpp/blob/main/example/demo_example.cc).
+
 ## Why this is minimal
 
 Apache Iceberg currently does not publish an official standalone C++ API in the

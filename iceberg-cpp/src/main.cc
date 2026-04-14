@@ -1,3 +1,6 @@
+// For a full native Iceberg C++ workflow example, see
+// https://github.com/apache/iceberg-cpp/blob/main/example/demo_example.cc
+
 #include <iostream>
 #include <string>
 #include <vector>
