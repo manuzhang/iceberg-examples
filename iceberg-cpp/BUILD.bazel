@@ -1,0 +1,6 @@
+package(default_visibility = ["//visibility:public"])
+
+cc_binary(
+    name = "iceberg_cpp_example",
+    srcs = ["src/main.cc"],
+)
