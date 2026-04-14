@@ -64,7 +64,7 @@ int main() {
               << ", event_type=" << row.event_type << ", payload=" << row.payload << "\n";
   }
 
-  std::cout << "\nNote: This is an in-memory educational example (not a full Iceberg catalog).\n";
+  std::cout << "\nNote: In-memory educational example (no catalog wiring or file I/O).\n";
 
   return 0;
 }
