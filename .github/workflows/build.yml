@@ -37,7 +37,6 @@ jobs:
           chmod +x "$HOME/.local/bin/bazel"
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
 
-
       - name: Show Bazel version
         run: bazel --version
 
