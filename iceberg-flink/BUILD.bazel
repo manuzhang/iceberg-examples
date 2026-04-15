@@ -1,0 +1,12 @@
+load("@rules_python//python:py_test.bzl", "py_test")
+
+package(default_visibility = ["//visibility:public"])
+
+py_test(
+    name = "flink_sql_smoke_test",
+    srcs = ["smoke_test.py"],
+    data = ["sql_pipeline.sql"],
+    main = "smoke_test.py",
+)
+
+exports_files(["sql_pipeline.sql"])
