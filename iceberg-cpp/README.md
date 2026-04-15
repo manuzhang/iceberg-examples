@@ -22,7 +22,7 @@ bazel run //iceberg-cpp:iceberg_cpp_example
 
 ## Upstream reference
 
-For a fuller native example (catalog setup and scanning), see
+For a fuller end-to-end native example (catalog registration and scanning), see
 [`apache/iceberg-cpp/example/demo_example.cc`](https://github.com/apache/iceberg-cpp/blob/main/example/demo_example.cc).
 
 ## Why this is minimal
