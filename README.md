@@ -35,6 +35,7 @@ The Spark examples are validated through Bazel as Python modules:
 
 ```bash
 bazel test //iceberg-spark:spark_examples_smoke_test
+bazel test //iceberg-flink:flink_sql_smoke_test
 ```
 
 Running the Spark pipelines themselves still requires a Spark 4.1 environment plus an Iceberg
@@ -48,6 +49,7 @@ steps.
 | [`iceberg-java/`](iceberg-java/) | Java | Examples using the Apache Iceberg Java API, including Apache Beam |
 | [`iceberg-rust/`](iceberg-rust/) | Rust | Examples using the Apache Iceberg Rust API |
 | [`iceberg-spark/`](iceberg-spark/) | Python / SQL | Spark 4.1 Declarative Pipelines with Apache Iceberg |
+| [`iceberg-flink/`](iceberg-flink/) | SQL | Flink SQL Iceberg catalog and table workflow example |
 | [`iceberg-cpp/`](iceberg-cpp/) | C++ | Minimal Iceberg-style schema modeling example in C++ |
 
 ## Repository Layout
@@ -56,6 +58,7 @@ steps.
 - `iceberg-java/BUILD.bazel` exposes Java libraries, runnable examples, and tests.
 - `iceberg-rust/BUILD.bazel` exposes the Rust example binary and unit tests.
 - `iceberg-spark/BUILD.bazel` validates the Spark Python examples and exports the SQL pipeline.
+- `iceberg-flink/BUILD.bazel` exports and validates the Flink SQL Iceberg example script.
 - `iceberg-cpp/BUILD.bazel` builds a runnable C++ Iceberg-style schema example.
 
 ## Learning Resources
@@ -65,6 +68,7 @@ steps.
 - [Apache Iceberg Rust Documentation](https://rust.iceberg.apache.org/)
 - [Apache Beam IcebergIO Documentation](https://beam.apache.org/documentation/io/built-in/iceberg/)
 - [Iceberg Table Format Specification](https://iceberg.apache.org/spec/)
+- [Apache Iceberg Flink Integration](https://iceberg.apache.org/docs/latest/flink/)
 - [Spark Declarative Pipelines Programming Guide](https://spark.apache.org/docs/latest/declarative-pipelines-programming-guide.html)
 - [Apache Iceberg Spark Integration](https://iceberg.apache.org/docs/latest/spark-getting-started/)
 
