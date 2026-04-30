@@ -69,6 +69,7 @@ bazel test --config=jdk21 //iceberg-java:all
 - Working with `GenericRecord`
 - Understanding data writing concepts
 - Row-level upsert semantics (key + sequence field)
+- `table.newRowDelta()` workflow for row-level changes
 - Record structure inspection
 
 ### 3. Schema Evolution (`SchemaEvolutionExample.java`)

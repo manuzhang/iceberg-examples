@@ -7,7 +7,14 @@ import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import org.apache.iceberg.DataFile;
+import org.apache.iceberg.DataFiles;
+import org.apache.iceberg.DeleteFile;
+import org.apache.iceberg.FileMetadata;
+import org.apache.iceberg.PartitionSpec;
+import org.apache.iceberg.RowDelta;
 import org.apache.iceberg.Schema;
+import org.apache.iceberg.Table;
 import org.apache.iceberg.data.GenericRecord;
 import org.apache.iceberg.data.Record;
 import org.apache.iceberg.types.Types;
@@ -53,6 +60,9 @@ public class DataOperationsExample {
     // Demonstrate row-level upsert semantics
     List<Record> upsertedRecords = applyRowLevelUpsert(sampleRecords, createUpsertRecords(schema));
     displayRecordInformation(upsertedRecords, schema, "After Row-Level Upsert");
+
+    // Show how the same operation maps to Iceberg RowDelta API usage
+    demonstrateRowDeltaApiUsage();
   }
 
   /** Creates a user schema for the example table. */
@@ -151,6 +161,49 @@ public class DataOperationsExample {
     List<Record> upsertedRecords = new ArrayList<>(mergedById.values());
     upsertedRecords.sort(Comparator.comparing(record -> (Long) record.getField("id")));
     return upsertedRecords;
+  }
+
+  /**
+   * Demonstrates how upsert-style changes are committed through Iceberg's RowDelta API.
+   *
+   * <p>This method constructs representative DataFile/DeleteFile metadata and shows the
+   * table.newRowDelta() flow. The files/paths are illustrative.
+   */
+  public void demonstrateRowDeltaApiUsage() {
+    LOG.info("=== RowDelta API Mapping ===");
+
+    PartitionSpec spec = PartitionSpec.unpartitioned();
+
+    DataFile insertDataFile =
+        DataFiles.builder(spec)
+            .withPath("file:///tmp/iceberg-examples/data/insert-file.parquet")
+            .withFileSizeInBytes(1024)
+            .withRecordCount(1)
+            .build();
+
+    DeleteFile equalityDeleteFile =
+        FileMetadata.deleteFileBuilder(spec)
+            .ofEqualityDeletes(1)
+            .withPath("file:///tmp/iceberg-examples/delete/equality-delete-file.parquet")
+            .withFileSizeInBytes(256)
+            .withRecordCount(1)
+            .withFormat(org.apache.iceberg.FileFormat.PARQUET)
+            .build();
+
+    LOG.info("RowDelta pattern for row-level upsert:");
+    LOG.info("  1) table.newRowDelta()");
+    LOG.info("  2) addDeletes(equalityDeleteFile) for rows to replace");
+    LOG.info("  3) addRows(insertDataFile) for new row versions");
+    LOG.info("  4) commit() atomically");
+
+    LOG.info("Illustrative files: insert={}, delete={}", insertDataFile.path(), equalityDeleteFile.path());
+    LOG.info("Use applyRowDelta(table, insertDataFile, equalityDeleteFile) when a Table handle is available.");
+  }
+
+  /** Applies a row-level change set to a table using table.newRowDelta(). */
+  public void applyRowDelta(Table table, DataFile insertDataFile, DeleteFile deleteFile) {
+    RowDelta rowDelta = table.newRowDelta();
+    rowDelta.addDeletes(deleteFile).addRows(insertDataFile).commit();
   }
 
   /** Displays information about the created records. */
