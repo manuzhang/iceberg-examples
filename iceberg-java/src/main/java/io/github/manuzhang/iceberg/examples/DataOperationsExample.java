@@ -1,8 +1,12 @@
 package io.github.manuzhang.iceberg.examples;
 
 import java.time.OffsetDateTime;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import org.apache.iceberg.Schema;
 import org.apache.iceberg.data.GenericRecord;
 import org.apache.iceberg.data.Record;
@@ -43,8 +47,12 @@ public class DataOperationsExample {
     // Create sample records
     List<Record> sampleRecords = createSampleRecords(schema);
 
-    // Display record information
-    displayRecordInformation(sampleRecords, schema);
+    // Display initial record information
+    displayRecordInformation(sampleRecords, schema, "Initial Records");
+
+    // Demonstrate row-level upsert semantics
+    List<Record> upsertedRecords = applyRowLevelUpsert(sampleRecords, createUpsertRecords(schema));
+    displayRecordInformation(upsertedRecords, schema, "After Row-Level Upsert");
   }
 
   /** Creates a user schema for the example table. */
@@ -94,9 +102,60 @@ public class DataOperationsExample {
     return records;
   }
 
+  /** Creates records that update existing rows and insert new rows. */
+  private List<Record> createUpsertRecords(Schema schema) {
+    LOG.info("Creating upsert records...");
+
+    long currentTime = OffsetDateTime.now().toInstant().toEpochMilli() * 1000;
+
+    Record updatedBob = GenericRecord.create(schema);
+    updatedBob.setField("id", 2L);
+    updatedBob.setField("name", "Bob Smith");
+    updatedBob.setField("email", "bob.smith@example.com");
+    updatedBob.setField("age", 36);
+    updatedBob.setField("created_at", currentTime + 5000000);
+    updatedBob.setField("active", true);
+
+    Record newDana = GenericRecord.create(schema);
+    newDana.setField("id", 4L);
+    newDana.setField("name", "Dana Lee");
+    newDana.setField("email", "dana@example.com");
+    newDana.setField("age", 24);
+    newDana.setField("created_at", currentTime + 6000000);
+    newDana.setField("active", true);
+
+    return Arrays.asList(updatedBob, newDana);
+  }
+
+  /**
+   * Applies row-level upsert semantics using id as the primary key and created_at as sequence
+   * number.
+   */
+  public List<Record> applyRowLevelUpsert(List<Record> baseRecords, List<Record> changeRecords) {
+    Map<Long, Record> mergedById = new LinkedHashMap<>();
+
+    for (Record record : baseRecords) {
+      mergedById.put((Long) record.getField("id"), record);
+    }
+
+    for (Record changeRecord : changeRecords) {
+      Long id = (Long) changeRecord.getField("id");
+      Record existingRecord = mergedById.get(id);
+
+      if (existingRecord == null
+          || (Long) changeRecord.getField("created_at") >= (Long) existingRecord.getField("created_at")) {
+        mergedById.put(id, changeRecord);
+      }
+    }
+
+    List<Record> upsertedRecords = new ArrayList<>(mergedById.values());
+    upsertedRecords.sort(Comparator.comparing(record -> (Long) record.getField("id")));
+    return upsertedRecords;
+  }
+
   /** Displays information about the created records. */
-  private void displayRecordInformation(List<Record> records, Schema schema) {
-    LOG.info("=== Record Information ===");
+  private void displayRecordInformation(List<Record> records, Schema schema, String sectionTitle) {
+    LOG.info("=== {} ===", sectionTitle);
     LOG.info("Schema: {}", schema);
     LOG.info("Created {} records:", records.size());
 
@@ -112,13 +171,14 @@ public class DataOperationsExample {
           record.getField("active"));
     }
 
-    LOG.info("Record structure demonstration:");
+    LOG.info("Row-level upsert demonstration:");
     LOG.info("- Records are created using GenericRecord.create(schema)");
     LOG.info("- Fields are set using record.setField(fieldName, value)");
     LOG.info("- Optional fields can be set to null");
     LOG.info("- Required fields must have non-null values");
+    LOG.info("- Upsert uses id as row key and created_at as ordering field");
 
-    LOG.info("Note: For actual table operations (create, read, write),");
+    LOG.info("Note: For actual table operations (create, read, write, merge),");
     LOG.info("use catalog implementations and Iceberg's table APIs or");
     LOG.info("compute engines like Spark, Flink, or Trino.");
   }

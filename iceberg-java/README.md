@@ -68,6 +68,7 @@ bazel test --config=jdk21 //iceberg-java:all
 - Creating sample records
 - Working with `GenericRecord`
 - Understanding data writing concepts
+- Row-level upsert semantics (key + sequence field)
 - Record structure inspection
 
 ### 3. Schema Evolution (`SchemaEvolutionExample.java`)

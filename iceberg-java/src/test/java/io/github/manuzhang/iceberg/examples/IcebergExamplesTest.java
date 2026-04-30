@@ -7,7 +7,11 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
+import java.util.Arrays;
+import java.util.List;
 import org.apache.iceberg.Schema;
+import org.apache.iceberg.data.GenericRecord;
+import org.apache.iceberg.data.Record;
 import org.apache.iceberg.types.EdgeAlgorithm;
 import org.apache.iceberg.types.Types;
 import org.junit.Before;
@@ -192,6 +196,52 @@ public class IcebergExamplesTest {
     assertEquals(Types.TimestampNanoType.withZone(), v3Schema.findType("event_time"));
     assertTrue(v3Schema.findType("payload").isVariantType());
     assertEquals("active", v3Schema.findField("status").initialDefault());
+  }
+
+  @Test
+  public void testRowLevelUpsert() {
+    DataOperationsExample dataExample = new DataOperationsExample();
+
+    Schema schema =
+        new Schema(
+            Types.NestedField.required(1, "id", Types.LongType.get()),
+            Types.NestedField.required(2, "name", Types.StringType.get()),
+            Types.NestedField.optional(3, "email", Types.StringType.get()),
+            Types.NestedField.optional(4, "age", Types.IntegerType.get()),
+            Types.NestedField.required(5, "created_at", Types.TimestampType.withZone()),
+            Types.NestedField.optional(6, "active", Types.BooleanType.get()));
+
+    Record base = GenericRecord.create(schema);
+    base.setField("id", 1L);
+    base.setField("name", "Alice");
+    base.setField("email", "alice@example.com");
+    base.setField("age", 28);
+    base.setField("created_at", 1000L);
+    base.setField("active", true);
+
+    Record updated = GenericRecord.create(schema);
+    updated.setField("id", 1L);
+    updated.setField("name", "Alice");
+    updated.setField("email", "alice+new@example.com");
+    updated.setField("age", 29);
+    updated.setField("created_at", 2000L);
+    updated.setField("active", true);
+
+    Record inserted = GenericRecord.create(schema);
+    inserted.setField("id", 2L);
+    inserted.setField("name", "Bob");
+    inserted.setField("email", "bob@example.com");
+    inserted.setField("age", 30);
+    inserted.setField("created_at", 1500L);
+    inserted.setField("active", true);
+
+    List<Record> result =
+        dataExample.applyRowLevelUpsert(Arrays.asList(base), Arrays.asList(updated, inserted));
+
+    assertEquals(2, result.size());
+    assertEquals(1L, result.get(0).getField("id"));
+    assertEquals("alice+new@example.com", result.get(0).getField("email"));
+    assertEquals(2L, result.get(1).getField("id"));
   }
 
   @Test
