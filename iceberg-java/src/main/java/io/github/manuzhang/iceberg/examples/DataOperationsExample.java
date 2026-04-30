@@ -10,6 +10,7 @@ import java.util.Map;
 import org.apache.iceberg.DataFile;
 import org.apache.iceberg.DataFiles;
 import org.apache.iceberg.DeleteFile;
+import org.apache.iceberg.FileFormat;
 import org.apache.iceberg.FileMetadata;
 import org.apache.iceberg.PartitionSpec;
 import org.apache.iceberg.RowDelta;
@@ -181,29 +182,29 @@ public class DataOperationsExample {
             .withRecordCount(1)
             .build();
 
-    DeleteFile equalityDeleteFile =
+    DeleteFile deletionVectorFile =
         FileMetadata.deleteFileBuilder(spec)
-            .ofEqualityDeletes(1)
-            .withPath("file:///tmp/iceberg-examples/delete/equality-delete-file.parquet")
+            .ofPositionDeletes()
+            .withPath("file:///tmp/iceberg-examples/delete/deletion-vector-file.puffin")
             .withFileSizeInBytes(256)
             .withRecordCount(1)
-            .withFormat(org.apache.iceberg.FileFormat.PARQUET)
+            .withFormat(FileFormat.PUFFIN)
             .build();
 
-    LOG.info("RowDelta pattern for row-level upsert:");
+    LOG.info("RowDelta pattern for row-level upsert with v3 deletion vectors:");
     LOG.info("  1) table.newRowDelta()");
-    LOG.info("  2) addDeletes(equalityDeleteFile) for rows to replace");
+    LOG.info("  2) addDeletes(deletionVectorFile) for rows to replace");
     LOG.info("  3) addRows(insertDataFile) for new row versions");
     LOG.info("  4) commit() atomically");
 
-    LOG.info("Illustrative files: insert={}, delete={}", insertDataFile.path(), equalityDeleteFile.path());
-    LOG.info("Use applyRowDelta(table, insertDataFile, equalityDeleteFile) when a Table handle is available.");
+    LOG.info("Illustrative files: insert={}, dv={}", insertDataFile.path(), deletionVectorFile.path());
+    LOG.info("Use applyRowDelta(table, insertDataFile, deletionVectorFile) when a Table handle is available.");
   }
 
   /** Applies a row-level change set to a table using table.newRowDelta(). */
-  public void applyRowDelta(Table table, DataFile insertDataFile, DeleteFile deleteFile) {
+  public void applyRowDelta(Table table, DataFile insertDataFile, DeleteFile deletionVectorFile) {
     RowDelta rowDelta = table.newRowDelta();
-    rowDelta.addDeletes(deleteFile).addRows(insertDataFile).commit();
+    rowDelta.addDeletes(deletionVectorFile).addRows(insertDataFile).commit();
   }
 
   /** Displays information about the created records. */
