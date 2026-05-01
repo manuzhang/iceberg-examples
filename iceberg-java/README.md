@@ -42,6 +42,32 @@ bazel run //iceberg-java:table_format_v3_example
 bazel run //iceberg-java:beam_iceberg_example
 ```
 
+The Beam example uses Beam Managed Iceberg IO with Iceberg's
+`org.apache.iceberg.rest.RESTCatalog` implementation. By default it starts Iceberg's
+`RESTCatalogServer` backed by `HadoopCatalog` and a temporary local warehouse, so this command is
+self-contained:
+
+```bash
+bazel run //iceberg-java:beam_iceberg_example
+```
+
+To use an external REST catalog service, provide the catalog URI and warehouse location:
+
+```bash
+ICEBERG_REST_URI=http://localhost:8181 \
+ICEBERG_WAREHOUSE=file:///tmp/iceberg-beam-warehouse \
+bazel run //iceberg-java:beam_iceberg_example
+```
+
+You can also pass `catalog_uri`, `warehouse`, and `table` as positional arguments:
+
+```bash
+bazel run //iceberg-java:beam_iceberg_example -- \
+  http://localhost:8181 \
+  file:///tmp/iceberg-beam-warehouse \
+  default.users
+```
+
 ### Run Tests
 
 ```bash
@@ -87,15 +113,16 @@ bazel test --config=jdk21 //iceberg-java:all
 ### 5. Apache Beam + Iceberg (`BeamIcebergExample.java`)
 
 - Defining a Beam schema that maps to an Iceberg table
-- Writing rows with `IcebergIO.writeRows()`
-- Reading rows back with `IcebergIO.readRows()`
-- Configuring a local Hadoop catalog
+- Writing rows with `Managed.write("iceberg")`
+- Reading rows back with `Managed.read("iceberg")`
+- Configuring Iceberg's `RESTCatalog`
+- Running Iceberg's embedded `RESTCatalogServer` for the default example
 - Running pipelines locally with the DirectRunner
 
 ## Key Dependencies
 
 - Apache Iceberg API / Core / Data
-- Apache Beam SDK and IcebergIO
+- Apache Beam SDK, Managed IO, and IcebergIO
 - Apache Hadoop Common
 - SLF4J
 - JUnit 4
