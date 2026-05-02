@@ -12,6 +12,7 @@ Apache Iceberg is an open table format for huge analytic datasets. These example
 - Schema evolution concepts
 - Table format v3 features
 - Apache Beam integration with Iceberg tables
+- Apache Beam CDC reads from Iceberg snapshots
 
 ## Prerequisites
 
@@ -40,15 +41,17 @@ bazel run //iceberg-java:data_operations_example
 bazel run //iceberg-java:schema_evolution_example
 bazel run //iceberg-java:table_format_v3_example
 bazel run //iceberg-java:beam_iceberg_example
+bazel run //iceberg-java:beam_iceberg_cdc_example
 ```
 
-The Beam example uses Beam Managed Iceberg IO with Iceberg's
+The Beam examples use Beam Managed Iceberg IO with Iceberg's
 `org.apache.iceberg.rest.RESTCatalog` implementation. By default it starts Iceberg's
 `RESTCatalogServer` backed by `HadoopCatalog` and a temporary local warehouse, so this command is
 self-contained:
 
 ```bash
 bazel run //iceberg-java:beam_iceberg_example
+bazel run //iceberg-java:beam_iceberg_cdc_example
 ```
 
 To use an external REST catalog service, provide the catalog URI and warehouse location:
@@ -57,6 +60,11 @@ To use an external REST catalog service, provide the catalog URI and warehouse l
 ICEBERG_REST_URI=http://localhost:8181 \
 ICEBERG_WAREHOUSE=file:///tmp/iceberg-beam-warehouse \
 bazel run //iceberg-java:beam_iceberg_example
+
+ICEBERG_REST_URI=http://localhost:8181 \
+ICEBERG_WAREHOUSE=file:///tmp/iceberg-beam-warehouse \
+ICEBERG_TABLE=default.customers \
+bazel run //iceberg-java:beam_iceberg_cdc_example
 ```
 
 You can also pass `catalog_uri`, `warehouse`, and `table` as positional arguments:
@@ -66,6 +74,11 @@ bazel run //iceberg-java:beam_iceberg_example -- \
   http://localhost:8181 \
   file:///tmp/iceberg-beam-warehouse \
   default.users
+
+bazel run //iceberg-java:beam_iceberg_cdc_example -- \
+  http://localhost:8181 \
+  file:///tmp/iceberg-beam-warehouse \
+  default.customers
 ```
 
 ### Run Tests
@@ -118,6 +131,13 @@ bazel test --config=jdk21 //iceberg-java:all
 - Configuring Iceberg's `RESTCatalog`
 - Running Iceberg's embedded `RESTCatalogServer` for the default example
 - Running pipelines locally with the DirectRunner
+
+### 6. Apache Beam + Iceberg CDC (`BeamIcebergCdcExample.java`)
+
+- Writing ordinary customer rows to Iceberg across two snapshots
+- Capturing Iceberg snapshot IDs after each Beam write
+- Reading only rows added by the second snapshot with `IcebergIO.readRows(...).withCdc()`
+- Running the CDC reader locally with the DirectRunner and embedded `RESTCatalogServer`
 
 ## Key Dependencies
 
