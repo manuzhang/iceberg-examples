@@ -54,6 +54,16 @@ java_binary(
     ],
 )
 
+java_binary(
+    name = "beam_iceberg_cdc_example",
+    main_class = "io.github.manuzhang.iceberg.examples.BeamIcebergCdcExample",
+    runtime_deps = [
+        # Keep Iceberg open-api before Hadoop's Jetty 9 transitive jars for RESTCatalogServer.
+        "@maven//:org_apache_iceberg_iceberg_open_api",
+        ":lib",
+    ],
+)
+
 java_test(
     name = "iceberg_examples_test",
     srcs = ["src/test/java/io/github/manuzhang/iceberg/examples/IcebergExamplesTest.java"],
@@ -61,6 +71,19 @@ java_test(
     deps = [
         ":lib",
         "@maven//:junit_junit",
+        "@maven//:org_apache_iceberg_iceberg_api",
+    ],
+)
+
+java_test(
+    name = "beam_iceberg_cdc_example_test",
+    srcs = ["src/test/java/io/github/manuzhang/iceberg/examples/BeamIcebergCdcExampleTest.java"],
+    test_class = "io.github.manuzhang.iceberg.examples.BeamIcebergCdcExampleTest",
+    deps = [
+        ":lib",
+        "@maven//:junit_junit",
+        "@maven//:org_apache_beam_beam_runners_direct_java",
+        "@maven//:org_apache_beam_beam_sdks_java_io_iceberg",
         "@maven//:org_apache_iceberg_iceberg_api",
     ],
 )
