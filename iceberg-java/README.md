@@ -11,6 +11,7 @@ Apache Iceberg is an open table format for huge analytic datasets. These example
 - Data records and type handling
 - Schema evolution concepts
 - Table format v3 features
+- Row-level upserts with v3 deletion vectors
 - Apache Beam integration with Iceberg tables
 - Apache Beam CDC reads from Iceberg snapshots
 
@@ -40,6 +41,7 @@ bazel run //iceberg-java:iceberg_examples
 bazel run //iceberg-java:data_operations_example
 bazel run //iceberg-java:schema_evolution_example
 bazel run //iceberg-java:table_format_v3_example
+bazel run //iceberg-java:row_level_upsert_example
 bazel run //iceberg-java:beam_iceberg_example
 bazel run //iceberg-java:beam_iceberg_cdc_example
 ```
@@ -123,7 +125,14 @@ bazel test --config=jdk21 //iceberg-java:all
 - Geospatial types
 - Default column values
 
-### 5. Apache Beam + Iceberg (`BeamIcebergExample.java`)
+### 5. Row-Level Upsert (`RowLevelUpsertExample.java`)
+
+- Creating an Iceberg v3 table
+- Writing a Puffin-backed deletion vector with `PartitioningDVWriter`
+- Committing a row-level upsert with `RowDelta`
+- Verifying that readers only see the replacement row after the upsert
+
+### 6. Apache Beam + Iceberg (`BeamIcebergExample.java`)
 
 - Defining a Beam schema that maps to an Iceberg table
 - Writing rows with `Managed.write("iceberg")`
@@ -132,7 +141,7 @@ bazel test --config=jdk21 //iceberg-java:all
 - Running Iceberg's embedded `RESTCatalogServer` for the default example
 - Running pipelines locally with the DirectRunner
 
-### 6. Apache Beam + Iceberg CDC (`BeamIcebergCdcExample.java`)
+### 7. Apache Beam + Iceberg CDC (`BeamIcebergCdcExample.java`)
 
 - Writing ordinary customer rows to Iceberg across two snapshots
 - Capturing Iceberg snapshot IDs after each Beam write

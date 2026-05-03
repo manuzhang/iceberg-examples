@@ -45,6 +45,12 @@ java_binary(
 )
 
 java_binary(
+    name = "row_level_upsert_example",
+    main_class = "io.github.manuzhang.iceberg.examples.RowLevelUpsertExample",
+    runtime_deps = [":lib"],
+)
+
+java_binary(
     name = "beam_iceberg_example",
     main_class = "io.github.manuzhang.iceberg.examples.BeamIcebergExample",
     runtime_deps = [
@@ -98,5 +104,18 @@ java_test(
         "@maven//:org_apache_beam_beam_runners_direct_java",
         "@maven//:org_apache_beam_beam_sdks_java_io_iceberg",
         "@maven//:org_apache_iceberg_iceberg_api",
+    ],
+)
+
+java_test(
+    name = "row_level_upsert_example_test",
+    srcs = ["src/test/java/io/github/manuzhang/iceberg/examples/RowLevelUpsertExampleTest.java"],
+    test_class = "io.github.manuzhang.iceberg.examples.RowLevelUpsertExampleTest",
+    deps = [
+        ":lib",
+        "@maven//:junit_junit",
+        "@maven//:org_apache_iceberg_iceberg_api",
+        "@maven//:org_apache_iceberg_iceberg_core",
+        "@maven//:org_apache_iceberg_iceberg_data",
     ],
 )
