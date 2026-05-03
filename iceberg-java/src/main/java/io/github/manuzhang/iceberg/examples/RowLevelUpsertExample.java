@@ -36,6 +36,7 @@ import org.apache.iceberg.io.DataWriter;
 import org.apache.iceberg.io.DeleteWriteResult;
 import org.apache.iceberg.io.OutputFileFactory;
 import org.apache.iceberg.io.PartitioningDVWriter;
+import org.apache.iceberg.inmemory.InMemoryFileIO;
 import org.apache.iceberg.rest.EmbeddedRestCatalogServer;
 import org.apache.iceberg.rest.RESTCatalog;
 import org.apache.iceberg.types.Types;
@@ -104,13 +105,19 @@ public class RowLevelUpsertExample {
   }
 
   public UpsertResult demonstrateRowLevelUpsert(Path warehouseDir) throws Exception {
-    String warehousePath = warehouseDir.toUri().toString();
+    String warehousePath = inMemoryWarehousePath(warehouseDir);
     String catalogUri = localCatalogUri();
+    String jdbcUri = sqliteCatalogUri(warehouseDir);
 
     try (EmbeddedRestCatalogServer ignored =
-            EmbeddedRestCatalogServer.start(catalogUri, warehousePath);
+            EmbeddedRestCatalogServer.startJdbcSqliteInMemoryFileIO(
+                catalogUri, jdbcUri, warehousePath);
         RESTCatalog catalog = restCatalog(catalogUri, warehousePath)) {
-      LOG.info("Using REST catalog {} backed by warehouse {}", catalogUri, warehousePath);
+      LOG.info(
+          "Using REST catalog {} backed by SQLite {} and warehouse {}",
+          catalogUri,
+          jdbcUri,
+          warehousePath);
       Table table = createV3Table(catalog);
 
       DataFile initialDataFile =
@@ -284,6 +291,7 @@ public class RowLevelUpsertExample {
   private static Map<String, String> restCatalogProperties(String catalogUri, String warehousePath) {
     return Map.of(
         CatalogProperties.URI, catalogUri,
+        CatalogProperties.FILE_IO_IMPL, InMemoryFileIO.class.getName(),
         CatalogProperties.WAREHOUSE_LOCATION, warehousePath);
   }
 
@@ -291,6 +299,14 @@ public class RowLevelUpsertExample {
     try (ServerSocket socket = new ServerSocket(0)) {
       return "http://localhost:" + socket.getLocalPort();
     }
+  }
+
+  private static String sqliteCatalogUri(Path warehouseDir) {
+    return "jdbc:sqlite:" + warehouseDir.resolve("catalog.db").toAbsolutePath();
+  }
+
+  private static String inMemoryWarehousePath(Path warehouseDir) {
+    return "in-memory://" + warehouseDir.getFileName();
   }
 
   static void deleteRecursively(Path root) {

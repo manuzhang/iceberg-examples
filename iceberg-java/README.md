@@ -129,6 +129,7 @@ bazel test --config=jdk21 //iceberg-java:all
 
 - Creating an Iceberg v3 table through a REST catalog
 - Starting an embedded local `RESTCatalogServer` for a self-contained run
+- Backing the REST catalog with SQLite metadata and `InMemoryFileIO`
 - Writing a Puffin-backed deletion vector with `PartitioningDVWriter`
 - Committing a row-level upsert with `RowDelta`
 - Verifying that readers only see the replacement row after the upsert
