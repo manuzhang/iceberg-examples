@@ -101,8 +101,8 @@ public class RowLevelUpsertExample {
         writeDataFile(
             table,
             List.of(
-                customer(1L, "Alice Johnson", "silver"),
-                customer(2L, "Bob Smith", "bronze")),
+                new Customer(1L, "Alice Johnson", "silver"),
+                new Customer(2L, "Bob Smith", "bronze")),
             "initial-load",
             1L);
     table.newAppend().appendFile(initialDataFile).commit();
@@ -114,8 +114,8 @@ public class RowLevelUpsertExample {
         writeDataFile(
             table,
             List.of(
-                customer(2L, "Bob Smith", "gold"),
-                customer(3L, "Carol Lee", "bronze")),
+                new Customer(2L, "Bob Smith", "gold"),
+                new Customer(3L, "Carol Lee", "bronze")),
             "row-level-upsert-data",
             3L);
 
@@ -143,7 +143,7 @@ public class RowLevelUpsertExample {
   }
 
   private DataFile writeDataFile(
-      Table table, List<Record> rows, String operationId, long taskId) throws IOException {
+      Table table, List<Customer> customers, String operationId, long taskId) throws IOException {
     GenericAppenderFactory appenderFactory =
         new GenericAppenderFactory(table, table.schema(), table.spec(), null, null, null, null);
     OutputFileFactory outputFileFactory =
@@ -155,8 +155,8 @@ public class RowLevelUpsertExample {
         appenderFactory.newDataWriter(outputFileFactory.newOutputFile(), FileFormat.PARQUET, null);
 
     try (writer) {
-      for (Record row : rows) {
-        writer.write(row);
+      for (Customer customer : customers) {
+        writer.write(toIcebergRecord(customer));
       }
     }
 
@@ -196,11 +196,11 @@ public class RowLevelUpsertExample {
     return rows;
   }
 
-  static Record customer(long customerId, String name, String loyaltyTier) {
+  private static Record toIcebergRecord(Customer customer) {
     Record record = GenericRecord.create(CUSTOMER_SCHEMA);
-    record.setField("customer_id", customerId);
-    record.setField("name", name);
-    record.setField("loyalty_tier", loyaltyTier);
+    record.setField("customer_id", customer.customerId());
+    record.setField("name", customer.name());
+    record.setField("loyalty_tier", customer.loyaltyTier());
     return record;
   }
 
@@ -222,44 +222,12 @@ public class RowLevelUpsertExample {
     }
   }
 
-  public static final class UpsertResult {
-    private final List<Record> visibleRows;
-    private final Map<String, String> snapshotSummary;
-    private final DataFile originalDataFile;
-    private final DataFile upsertDataFile;
-    private final DeleteFile deletionVectorFile;
+  private record Customer(long customerId, String name, String loyaltyTier) {}
 
-    private UpsertResult(
-        List<Record> visibleRows,
-        Map<String, String> snapshotSummary,
-        DataFile originalDataFile,
-        DataFile upsertDataFile,
-        DeleteFile deletionVectorFile) {
-      this.visibleRows = visibleRows;
-      this.snapshotSummary = snapshotSummary;
-      this.originalDataFile = originalDataFile;
-      this.upsertDataFile = upsertDataFile;
-      this.deletionVectorFile = deletionVectorFile;
-    }
-
-    public List<Record> visibleRows() {
-      return visibleRows;
-    }
-
-    public Map<String, String> snapshotSummary() {
-      return snapshotSummary;
-    }
-
-    public DataFile originalDataFile() {
-      return originalDataFile;
-    }
-
-    public DataFile upsertDataFile() {
-      return upsertDataFile;
-    }
-
-    public DeleteFile deletionVectorFile() {
-      return deletionVectorFile;
-    }
-  }
+  public record UpsertResult(
+      List<Record> visibleRows,
+      Map<String, String> snapshotSummary,
+      DataFile originalDataFile,
+      DataFile upsertDataFile,
+      DeleteFile deletionVectorFile) {}
 }
