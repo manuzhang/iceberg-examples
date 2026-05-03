@@ -127,7 +127,8 @@ bazel test --config=jdk21 //iceberg-java:all
 
 ### 5. Row-Level Upsert (`RowLevelUpsertExample.java`)
 
-- Creating an Iceberg v3 table
+- Creating an Iceberg v3 table through a REST catalog
+- Starting an embedded local `RESTCatalogServer` for a self-contained run
 - Writing a Puffin-backed deletion vector with `PartitioningDVWriter`
 - Committing a row-level upsert with `RowDelta`
 - Verifying that readers only see the replacement row after the upsert

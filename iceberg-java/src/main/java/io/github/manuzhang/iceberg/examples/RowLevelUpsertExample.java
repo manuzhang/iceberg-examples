@@ -2,6 +2,7 @@ package io.github.manuzhang.iceberg.examples;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
+import java.net.ServerSocket;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -10,6 +11,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Stream;
+import org.apache.iceberg.CatalogProperties;
 import org.apache.iceberg.DataFile;
 import org.apache.iceberg.DeleteFile;
 import org.apache.iceberg.FileFormat;
@@ -26,12 +28,16 @@ import org.apache.iceberg.data.IcebergGenerics;
 import org.apache.iceberg.data.Record;
 import org.apache.iceberg.deletes.PositionDelete;
 import org.apache.iceberg.expressions.Expressions;
-import org.apache.iceberg.hadoop.HadoopTables;
+import org.apache.iceberg.catalog.Namespace;
+import org.apache.iceberg.catalog.TableIdentifier;
+import org.apache.iceberg.exceptions.AlreadyExistsException;
 import org.apache.iceberg.io.CloseableIterable;
 import org.apache.iceberg.io.DataWriter;
 import org.apache.iceberg.io.DeleteWriteResult;
 import org.apache.iceberg.io.OutputFileFactory;
 import org.apache.iceberg.io.PartitioningDVWriter;
+import org.apache.iceberg.rest.EmbeddedRestCatalogServer;
+import org.apache.iceberg.rest.RESTCatalog;
 import org.apache.iceberg.types.Types;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -46,6 +52,8 @@ import org.slf4j.LoggerFactory;
 public class RowLevelUpsertExample {
 
   private static final Logger LOG = LoggerFactory.getLogger(RowLevelUpsertExample.class);
+  private static final String DEFAULT_CATALOG_NAME = "rest";
+  private static final TableIdentifier TABLE_IDENTIFIER = TableIdentifier.parse("default.customers");
 
   static final Schema CUSTOMER_SCHEMA =
       new Schema(
@@ -95,62 +103,84 @@ public class RowLevelUpsertExample {
     }
   }
 
-  public UpsertResult demonstrateRowLevelUpsert(Path warehouseDir) throws IOException {
-    Table table = createV3Table(warehouseDir.resolve("customers"));
+  public UpsertResult demonstrateRowLevelUpsert(Path warehouseDir) throws Exception {
+    String warehousePath = warehouseDir.toUri().toString();
+    String catalogUri = localCatalogUri();
 
-    DataFile initialDataFile =
-        writeDataFile(
-            table,
-            List.of(
-                new Customer(2L, "Bob Smith", "bronze"),
-                new Customer(1L, "Alice Johnson", "silver")),
-            "initial-load",
-            1L);
-    table.newAppend().appendFile(initialDataFile).commit();
-    table.refresh();
+    try (EmbeddedRestCatalogServer ignored =
+            EmbeddedRestCatalogServer.start(catalogUri, warehousePath);
+        RESTCatalog catalog = restCatalog(catalogUri, warehousePath)) {
+      LOG.info("Using REST catalog {} backed by warehouse {}", catalogUri, warehousePath);
+      Table table = createV3Table(catalog);
 
-    ExistingCustomerRow existingRow = findCustomerRow(table, UPSERTED_CUSTOMER_ID);
-    if (!initialDataFile.location().equals(existingRow.filePath())) {
-      throw new IllegalStateException(
-          "Expected customer_id="
-              + UPSERTED_CUSTOMER_ID
-              + " to be located in "
-              + initialDataFile.location()
-              + " but found "
-              + existingRow.filePath());
+      DataFile initialDataFile =
+          writeDataFile(
+              table,
+              List.of(
+                  new Customer(2L, "Bob Smith", "bronze"),
+                  new Customer(1L, "Alice Johnson", "silver")),
+              "initial-load",
+              1L);
+      table.newAppend().appendFile(initialDataFile).commit();
+      table.refresh();
+
+      ExistingCustomerRow existingRow = findCustomerRow(table, UPSERTED_CUSTOMER_ID);
+      if (!initialDataFile.location().equals(existingRow.filePath())) {
+        throw new IllegalStateException(
+            "Expected customer_id="
+                + UPSERTED_CUSTOMER_ID
+                + " to be located in "
+                + initialDataFile.location()
+                + " but found "
+                + existingRow.filePath());
+      }
+      DeleteFile deletionVectorFile =
+          writeDeletionVector(
+              table, initialDataFile, existingRow.rowPosition(), "row-level-upsert-dv", 2L);
+      DataFile upsertDataFile =
+          writeDataFile(
+              table,
+              List.of(
+                  new Customer(2L, "Bob Smith", "gold"),
+                  new Customer(3L, "Carol Lee", "bronze")),
+              "row-level-upsert-data",
+              3L);
+
+      table.newRowDelta().addDeletes(deletionVectorFile).addRows(upsertDataFile).commit();
+      table.refresh();
+
+      Snapshot snapshot = table.currentSnapshot();
+      return new UpsertResult(
+          readVisibleRows(table),
+          new LinkedHashMap<>(snapshot.summary()),
+          initialDataFile,
+          upsertDataFile,
+          deletionVectorFile);
     }
-    DeleteFile deletionVectorFile =
-        writeDeletionVector(table, initialDataFile, existingRow.rowPosition(), "row-level-upsert-dv", 2L);
-    DataFile upsertDataFile =
-        writeDataFile(
-            table,
-            List.of(
-                new Customer(2L, "Bob Smith", "gold"),
-                new Customer(3L, "Carol Lee", "bronze")),
-            "row-level-upsert-data",
-            3L);
-
-    table.newRowDelta().addDeletes(deletionVectorFile).addRows(upsertDataFile).commit();
-    table.refresh();
-
-    Snapshot snapshot = table.currentSnapshot();
-    return new UpsertResult(
-        readVisibleRows(table),
-        new LinkedHashMap<>(snapshot.summary()),
-        initialDataFile,
-        upsertDataFile,
-        deletionVectorFile);
   }
 
-  private Table createV3Table(Path tableDir) {
-    String tableLocation = tableDir.toUri().toString();
-    HadoopTables tables = new HadoopTables();
+  private Table createV3Table(RESTCatalog catalog) {
+    ensureNamespace(catalog, TABLE_IDENTIFIER.namespace());
 
-    return tables
-        .buildTable(tableLocation, CUSTOMER_SCHEMA)
+    return catalog
+        .buildTable(TABLE_IDENTIFIER, CUSTOMER_SCHEMA)
         .withPartitionSpec(PartitionSpec.unpartitioned())
         .withProperty(TableProperties.FORMAT_VERSION, "3")
         .create();
+  }
+
+  private RESTCatalog restCatalog(String catalogUri, String warehousePath) {
+    RESTCatalog catalog = new RESTCatalog();
+    catalog.initialize(DEFAULT_CATALOG_NAME, restCatalogProperties(catalogUri, warehousePath));
+    return catalog;
+  }
+
+  private void ensureNamespace(RESTCatalog catalog, Namespace namespace) {
+    try {
+      catalog.createNamespace(namespace);
+    } catch (AlreadyExistsException ignored) {
+      // The example may be pointed at an existing REST catalog namespace.
+    }
   }
 
   private DataFile writeDataFile(
@@ -249,6 +279,18 @@ public class RowLevelUpsertExample {
     record.setField("name", customer.name());
     record.setField("loyalty_tier", customer.loyaltyTier());
     return record;
+  }
+
+  private static Map<String, String> restCatalogProperties(String catalogUri, String warehousePath) {
+    return Map.of(
+        CatalogProperties.URI, catalogUri,
+        CatalogProperties.WAREHOUSE_LOCATION, warehousePath);
+  }
+
+  private static String localCatalogUri() throws IOException {
+    try (ServerSocket socket = new ServerSocket(0)) {
+      return "http://localhost:" + socket.getLocalPort();
+    }
   }
 
   static void deleteRecursively(Path root) {

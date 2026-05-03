@@ -47,7 +47,11 @@ java_binary(
 java_binary(
     name = "row_level_upsert_example",
     main_class = "io.github.manuzhang.iceberg.examples.RowLevelUpsertExample",
-    runtime_deps = [":lib"],
+    runtime_deps = [
+        # Keep Iceberg open-api before Hadoop's Jetty 9 transitive jars for RESTCatalogServer.
+        "@maven//:org_apache_iceberg_iceberg_open_api",
+        ":lib",
+    ],
 )
 
 java_binary(
@@ -112,6 +116,8 @@ java_test(
     srcs = ["src/test/java/io/github/manuzhang/iceberg/examples/RowLevelUpsertExampleTest.java"],
     test_class = "io.github.manuzhang.iceberg.examples.RowLevelUpsertExampleTest",
     deps = [
+        # Keep Iceberg open-api before Hadoop's Jetty 9 transitive jars for RESTCatalogServer.
+        "@maven//:org_apache_iceberg_iceberg_open_api",
         ":lib",
         "@maven//:junit_junit",
         "@maven//:org_apache_iceberg_iceberg_api",
