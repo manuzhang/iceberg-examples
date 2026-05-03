@@ -13,6 +13,7 @@ import java.util.stream.Stream;
 import org.apache.iceberg.DataFile;
 import org.apache.iceberg.DeleteFile;
 import org.apache.iceberg.FileFormat;
+import org.apache.iceberg.MetadataColumns;
 import org.apache.iceberg.PartitionSpec;
 import org.apache.iceberg.Schema;
 import org.apache.iceberg.Snapshot;
@@ -24,6 +25,7 @@ import org.apache.iceberg.data.GenericRecord;
 import org.apache.iceberg.data.IcebergGenerics;
 import org.apache.iceberg.data.Record;
 import org.apache.iceberg.deletes.PositionDelete;
+import org.apache.iceberg.expressions.Expressions;
 import org.apache.iceberg.hadoop.HadoopTables;
 import org.apache.iceberg.io.CloseableIterable;
 import org.apache.iceberg.io.DataWriter;
@@ -50,8 +52,7 @@ public class RowLevelUpsertExample {
           Types.NestedField.required(1, "customer_id", Types.LongType.get()),
           Types.NestedField.required(2, "name", Types.StringType.get()),
           Types.NestedField.optional(3, "loyalty_tier", Types.StringType.get()));
-
-  private static final long UPDATED_ROW_POSITION = 1L;
+  private static final long UPSERTED_CUSTOMER_ID = 2L;
 
   public static void main(String[] args) {
     Path warehouseDir = null;
@@ -101,15 +102,25 @@ public class RowLevelUpsertExample {
         writeDataFile(
             table,
             List.of(
-                new Customer(1L, "Alice Johnson", "silver"),
-                new Customer(2L, "Bob Smith", "bronze")),
+                new Customer(2L, "Bob Smith", "bronze"),
+                new Customer(1L, "Alice Johnson", "silver")),
             "initial-load",
             1L);
     table.newAppend().appendFile(initialDataFile).commit();
     table.refresh();
 
+    ExistingCustomerRow existingRow = findCustomerRow(table, UPSERTED_CUSTOMER_ID);
+    if (!initialDataFile.location().equals(existingRow.filePath())) {
+      throw new IllegalStateException(
+          "Expected customer_id="
+              + UPSERTED_CUSTOMER_ID
+              + " to be located in "
+              + initialDataFile.location()
+              + " but found "
+              + existingRow.filePath());
+    }
     DeleteFile deletionVectorFile =
-        writeDeletionVector(table, initialDataFile, UPDATED_ROW_POSITION, "row-level-upsert-dv", 2L);
+        writeDeletionVector(table, initialDataFile, existingRow.rowPosition(), "row-level-upsert-dv", 2L);
     DataFile upsertDataFile =
         writeDataFile(
             table,
@@ -183,6 +194,42 @@ public class RowLevelUpsertExample {
     return result.deleteFiles().get(0);
   }
 
+  private ExistingCustomerRow findCustomerRow(Table table, long customerId) throws IOException {
+    Schema lookupSchema =
+        new Schema(
+            CUSTOMER_SCHEMA.findField("customer_id"),
+            MetadataColumns.FILE_PATH,
+            MetadataColumns.ROW_POSITION);
+
+    try (CloseableIterable<Record> iterable =
+        IcebergGenerics.read(table)
+            .where(Expressions.equal("customer_id", customerId))
+            .project(lookupSchema)
+            .build()) {
+      ExistingCustomerRow match = null;
+
+      for (Record row : iterable) {
+        ExistingCustomerRow candidate =
+            new ExistingCustomerRow(
+                ((Number) row.getField("customer_id")).longValue(),
+                row.getField(MetadataColumns.FILE_PATH.name()).toString(),
+                ((Number) row.getField(MetadataColumns.ROW_POSITION.name())).longValue());
+
+        if (match != null) {
+          throw new IllegalStateException("Expected exactly one row for customer_id=" + customerId);
+        }
+
+        match = candidate;
+      }
+
+      if (match == null) {
+        throw new IllegalStateException("Could not find existing row for customer_id=" + customerId);
+      }
+
+      return match;
+    }
+  }
+
   private List<Record> readVisibleRows(Table table) throws IOException {
     List<Record> rows = new ArrayList<>();
 
@@ -223,6 +270,8 @@ public class RowLevelUpsertExample {
   }
 
   private record Customer(long customerId, String name, String loyaltyTier) {}
+
+  private record ExistingCustomerRow(long customerId, String filePath, long rowPosition) {}
 
   public record UpsertResult(
       List<Record> visibleRows,
