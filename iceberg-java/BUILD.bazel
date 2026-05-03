@@ -16,6 +16,7 @@ java_library(
         "@maven//:org_apache_iceberg_iceberg_open_api_test_fixtures",
         "@maven//:org_slf4j_slf4j_api",
         "@maven//:org_slf4j_slf4j_simple",
+        "@maven//:org_xerial_sqlite_jdbc",
         "@maven//:org_yaml_snakeyaml",
     ],
 )

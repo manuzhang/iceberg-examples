@@ -2,7 +2,6 @@ package io.github.manuzhang.iceberg.examples;
 
 import java.io.IOException;
 import java.io.UncheckedIOException;
-import java.net.ServerSocket;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -106,16 +105,15 @@ public class RowLevelUpsertExample {
 
   public UpsertResult demonstrateRowLevelUpsert(Path warehouseDir) throws Exception {
     String warehousePath = inMemoryWarehousePath(warehouseDir);
-    String catalogUri = localCatalogUri();
     String jdbcUri = sqliteCatalogUri(warehouseDir);
 
-    try (EmbeddedRestCatalogServer ignored =
+    try (EmbeddedRestCatalogServer server =
             EmbeddedRestCatalogServer.startJdbcSqliteInMemoryFileIO(
-                catalogUri, jdbcUri, warehousePath);
-        RESTCatalog catalog = restCatalog(catalogUri, warehousePath)) {
+                localCatalogUri(), jdbcUri, warehousePath);
+        RESTCatalog catalog = restCatalog(server.catalogUri(), warehousePath)) {
       LOG.info(
           "Using REST catalog {} backed by SQLite {} and warehouse {}",
-          catalogUri,
+          server.catalogUri(),
           jdbcUri,
           warehousePath);
       Table table = createV3Table(catalog);
@@ -295,10 +293,8 @@ public class RowLevelUpsertExample {
         CatalogProperties.WAREHOUSE_LOCATION, warehousePath);
   }
 
-  private static String localCatalogUri() throws IOException {
-    try (ServerSocket socket = new ServerSocket(0)) {
-      return "http://localhost:" + socket.getLocalPort();
-    }
+  private static String localCatalogUri() {
+    return "http://localhost:0";
   }
 
   private static String sqliteCatalogUri(Path warehouseDir) {

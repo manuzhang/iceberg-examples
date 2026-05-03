@@ -22,6 +22,7 @@ maven.install(
         "org.apache.iceberg:iceberg-open-api:1.10.1",
         "org.apache.iceberg:iceberg-open-api:jar:test-fixtures:1.10.1",
         "org.slf4j:slf4j-simple:2.0.17",
+        "org.xerial:sqlite-jdbc:3.50.2.0",
         "org.yaml:snakeyaml:2.2",
     ],
     repositories = [
