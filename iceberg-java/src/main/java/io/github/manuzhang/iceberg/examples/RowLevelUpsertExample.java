@@ -35,7 +35,6 @@ import org.apache.iceberg.io.DataWriter;
 import org.apache.iceberg.io.DeleteWriteResult;
 import org.apache.iceberg.io.OutputFileFactory;
 import org.apache.iceberg.io.PartitioningDVWriter;
-import org.apache.iceberg.inmemory.InMemoryFileIO;
 import org.apache.iceberg.rest.EmbeddedRestCatalogServer;
 import org.apache.iceberg.rest.RESTCatalog;
 import org.apache.iceberg.types.Types;
@@ -53,6 +52,7 @@ public class RowLevelUpsertExample {
 
   private static final Logger LOG = LoggerFactory.getLogger(RowLevelUpsertExample.class);
   private static final String DEFAULT_CATALOG_NAME = "rest";
+  private static final FileFormat DATA_FILE_FORMAT = FileFormat.AVRO;
   private static final TableIdentifier TABLE_IDENTIFIER = TableIdentifier.parse("default.customers");
 
   static final Schema CUSTOMER_SCHEMA =
@@ -194,11 +194,11 @@ public class RowLevelUpsertExample {
         new GenericAppenderFactory(table, table.schema(), table.spec(), null, null, null, null);
     OutputFileFactory outputFileFactory =
         OutputFileFactory.builderFor(table, 0, taskId)
-            .format(FileFormat.PARQUET)
+            .format(DATA_FILE_FORMAT)
             .operationId(operationId)
             .build();
     DataWriter<Record> writer =
-        appenderFactory.newDataWriter(outputFileFactory.newOutputFile(), FileFormat.PARQUET, null);
+        appenderFactory.newDataWriter(outputFileFactory.newOutputFile(), DATA_FILE_FORMAT, null);
 
     try (writer) {
       for (Customer customer : customers) {
@@ -289,7 +289,7 @@ public class RowLevelUpsertExample {
   private static Map<String, String> restCatalogProperties(String catalogUri, String warehousePath) {
     return Map.of(
         CatalogProperties.URI, catalogUri,
-        CatalogProperties.FILE_IO_IMPL, InMemoryFileIO.class.getName(),
+        CatalogProperties.FILE_IO_IMPL, SharedInMemoryFileIO.class.getName(),
         CatalogProperties.WAREHOUSE_LOCATION, warehousePath);
   }
 

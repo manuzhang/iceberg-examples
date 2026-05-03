@@ -1,6 +1,7 @@
 package io.github.manuzhang.iceberg.examples;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
@@ -74,6 +75,18 @@ public class BeamIcebergExampleTest {
     assertEquals(BeamIcebergExample.ICEBERG_REST_CATALOG_IMPL, properties.get("catalog-impl"));
     assertEquals("http://catalog:8181", properties.get("uri"));
     assertEquals("file:///tmp/warehouse", properties.get("warehouse"));
+    assertFalse(properties.containsKey("io-impl"));
+  }
+
+  @Test
+  public void testRestCatalogPropertiesForInMemoryWarehouse() {
+    Map<String, String> properties =
+        BeamIcebergExample.restCatalogProperties(
+            "http://catalog:8181", "in-memory://beam-warehouse");
+
+    assertEquals(
+        "io.github.manuzhang.iceberg.examples.SharedInMemoryFileIO",
+        properties.get("io-impl"));
   }
 
   @Test

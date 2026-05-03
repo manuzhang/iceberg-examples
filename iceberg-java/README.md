@@ -48,8 +48,8 @@ bazel run //iceberg-java:beam_iceberg_cdc_example
 
 The Beam examples use Beam Managed Iceberg IO with Iceberg's
 `org.apache.iceberg.rest.RESTCatalog` implementation. By default it starts Iceberg's
-`RESTCatalogServer` backed by `HadoopCatalog` and a temporary local warehouse, so this command is
-self-contained:
+`RESTCatalogServer` backed by SQLite metadata and a shared in-memory `FileIO`, so this command is
+self-contained and does not require a local Hadoop warehouse:
 
 ```bash
 bazel run //iceberg-java:beam_iceberg_example
@@ -129,7 +129,7 @@ bazel test --config=jdk21 //iceberg-java:all
 
 - Creating an Iceberg v3 table through a REST catalog
 - Starting an embedded local `RESTCatalogServer` for a self-contained run
-- Backing the REST catalog with SQLite metadata and `InMemoryFileIO`
+- Backing the REST catalog with SQLite metadata and a shared in-memory `FileIO`
 - Writing a Puffin-backed deletion vector with `PartitioningDVWriter`
 - Committing a row-level upsert with `RowDelta`
 - Verifying that readers only see the replacement row after the upsert
@@ -140,7 +140,7 @@ bazel test --config=jdk21 //iceberg-java:all
 - Writing rows with `Managed.write("iceberg")`
 - Reading rows back with `Managed.read("iceberg")`
 - Configuring Iceberg's `RESTCatalog`
-- Running Iceberg's embedded `RESTCatalogServer` for the default example
+- Running Iceberg's embedded `RESTCatalogServer` with SQLite metadata for the default example
 - Running pipelines locally with the DirectRunner
 
 ### 7. Apache Beam + Iceberg CDC (`BeamIcebergCdcExample.java`)
@@ -154,7 +154,6 @@ bazel test --config=jdk21 //iceberg-java:all
 
 - Apache Iceberg API / Core / Data
 - Apache Beam SDK, Managed IO, and IcebergIO
-- Apache Hadoop Common
 - SLF4J
 - JUnit 4
 

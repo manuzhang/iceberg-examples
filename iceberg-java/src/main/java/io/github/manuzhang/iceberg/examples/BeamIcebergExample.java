@@ -1,8 +1,7 @@
 package io.github.manuzhang.iceberg.examples;
 
-import java.io.IOException;
-import java.nio.file.Files;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.apache.beam.sdk.Pipeline;
@@ -13,6 +12,7 @@ import org.apache.beam.sdk.transforms.DoFn;
 import org.apache.beam.sdk.transforms.ParDo;
 import org.apache.beam.sdk.values.PCollection;
 import org.apache.beam.sdk.values.Row;
+import org.apache.iceberg.CatalogProperties;
 import org.apache.iceberg.rest.EmbeddedRestCatalogServer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -159,10 +159,14 @@ public class BeamIcebergExample {
   }
 
   static Map<String, String> restCatalogProperties(String catalogUri, String warehousePath) {
-    return Map.of(
-        "catalog-impl", ICEBERG_REST_CATALOG_IMPL,
-        "uri", catalogUri,
-        "warehouse", warehousePath);
+    Map<String, String> properties = new HashMap<>();
+    properties.put("catalog-impl", ICEBERG_REST_CATALOG_IMPL);
+    properties.put("uri", catalogUri);
+    properties.put("warehouse", warehousePath);
+    if (usesInMemoryWarehouse(warehousePath)) {
+      properties.put(CatalogProperties.FILE_IO_IMPL, SharedInMemoryFileIO.class.getName());
+    }
+    return Map.copyOf(properties);
   }
 
   private static String configuredValue(
@@ -179,13 +183,13 @@ public class BeamIcebergExample {
     return defaultValue;
   }
 
-  private static String configuredWarehouse(String[] args) throws IOException {
+  private static String configuredWarehouse(String[] args) {
     String configuredWarehouse = configuredValue(args, 1, "ICEBERG_WAREHOUSE", null);
     if (configuredWarehouse != null) {
       return configuredWarehouse;
     }
 
-    return Files.createTempDirectory("iceberg-beam-warehouse").toUri().toString();
+    return newInMemoryWarehousePath("iceberg-beam-warehouse");
   }
 
   private static EmbeddedRestCatalogServer maybeStartLocalRestCatalog(
@@ -200,5 +204,13 @@ public class BeamIcebergExample {
 
     LOG.info("No REST catalog found at {}; starting an embedded local catalog", catalogUri);
     return EmbeddedRestCatalogServer.start(catalogUri, warehousePath);
+  }
+
+  static String newInMemoryWarehousePath(String warehouseName) {
+    return "in-memory://" + warehouseName + "-" + Long.toUnsignedString(System.nanoTime());
+  }
+
+  static boolean usesInMemoryWarehouse(String warehousePath) {
+    return warehousePath.startsWith("in-memory://");
   }
 }

@@ -4,11 +4,14 @@ import java.io.IOException;
 import java.net.HttpURLConnection;
 import java.net.URI;
 import java.net.URL;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Stream;
+import io.github.manuzhang.iceberg.examples.SharedInMemoryFileIO;
 import org.apache.iceberg.CatalogProperties;
-import org.apache.iceberg.hadoop.HadoopCatalog;
-import org.apache.iceberg.inmemory.InMemoryFileIO;
 import org.apache.iceberg.jdbc.JdbcCatalog;
 import org.eclipse.jetty.server.Server;
 import org.eclipse.jetty.server.ServerConnector;
@@ -16,17 +19,20 @@ import org.eclipse.jetty.servlet.ServletContextHandler;
 import org.eclipse.jetty.servlet.ServletHolder;
 
 public final class EmbeddedRestCatalogServer implements AutoCloseable {
-  private final RESTCatalogServer server;
-  private final Server jdbcServer;
-  private final JdbcCatalog jdbcCatalog;
+  private static final int DEFAULT_REST_PORT = 8181;
+  private static final String DEFAULT_BACKEND_CATALOG_NAME = "rest_backend";
+
+  private final Server server;
+  private final JdbcCatalog backendCatalog;
   private final String catalogUri;
+  private final Path temporaryCatalogDir;
 
   private EmbeddedRestCatalogServer(
-      RESTCatalogServer server, Server jdbcServer, JdbcCatalog jdbcCatalog, String catalogUri) {
+      Server server, JdbcCatalog backendCatalog, String catalogUri, Path temporaryCatalogDir) {
     this.server = server;
-    this.jdbcServer = jdbcServer;
-    this.jdbcCatalog = jdbcCatalog;
+    this.backendCatalog = backendCatalog;
     this.catalogUri = catalogUri;
+    this.temporaryCatalogDir = temporaryCatalogDir;
   }
 
   public static EmbeddedRestCatalogServer noop() {
@@ -50,55 +56,59 @@ public final class EmbeddedRestCatalogServer implements AutoCloseable {
 
   public static EmbeddedRestCatalogServer start(String catalogUri, String warehousePath)
       throws Exception {
+    Path temporaryCatalogDir = Files.createTempDirectory("iceberg-rest-catalog");
     Map<String, String> config = new HashMap<>();
-    config.put(CatalogProperties.CATALOG_IMPL, HadoopCatalog.class.getName());
+    config.put(CatalogProperties.URI, sqliteCatalogUri(temporaryCatalogDir));
     config.put(CatalogProperties.WAREHOUSE_LOCATION, warehousePath);
-    return start(catalogUri, config);
+    config.put("jdbc.schema-version", "V1");
+    if (usesInMemoryFileIO(warehousePath)) {
+      config.put(CatalogProperties.FILE_IO_IMPL, SharedInMemoryFileIO.class.getName());
+    }
+    return start(catalogUri, config, temporaryCatalogDir);
   }
 
   public static EmbeddedRestCatalogServer startJdbcSqliteInMemoryFileIO(
       String catalogUri, String jdbcUri, String warehousePath) throws Exception {
+    Map<String, String> config = new HashMap<>();
+    config.put(CatalogProperties.URI, jdbcUri);
+    config.put(CatalogProperties.FILE_IO_IMPL, SharedInMemoryFileIO.class.getName());
+    config.put(CatalogProperties.WAREHOUSE_LOCATION, warehousePath);
+    config.put("jdbc.schema-version", "V1");
+    return start(catalogUri, config, null);
+  }
+
+  private static EmbeddedRestCatalogServer start(
+      String catalogUri, Map<String, String> config, Path temporaryCatalogDir) throws Exception {
     URI uri = URI.create(catalogUri);
-    JdbcCatalog catalog = new JdbcCatalog();
-    catalog.initialize(
-        "rest_backend",
-        Map.of(
-            CatalogProperties.URI, jdbcUri,
-            CatalogProperties.FILE_IO_IMPL, InMemoryFileIO.class.getName(),
-            CatalogProperties.WAREHOUSE_LOCATION, warehousePath,
-            "jdbc.schema-version", "V1"));
+    int port = uri.getPort() == -1 ? DEFAULT_REST_PORT : uri.getPort();
 
-    RESTCatalogAdapter adapter = new RESTCatalogAdapter(catalog);
+    JdbcCatalog backendCatalog = new JdbcCatalog();
+    backendCatalog.initialize(DEFAULT_BACKEND_CATALOG_NAME, config);
+
+    RESTCatalogAdapter adapter = new RESTCatalogAdapter(backendCatalog);
     RESTCatalogServlet servlet = new RESTCatalogServlet(adapter);
-
     Server server = new Server();
     ServerConnector connector = new ServerConnector(server);
-    connector.setHost(uri.getHost());
-    connector.setPort(uri.getPort());
+    connector.setPort(port);
+    if (uri.getHost() != null && !uri.getHost().isBlank()) {
+      connector.setHost(uri.getHost());
+    }
     server.addConnector(connector);
 
     ServletContextHandler context = new ServletContextHandler(ServletContextHandler.NO_SESSIONS);
     context.setContextPath("/");
     context.addServlet(new ServletHolder(servlet), "/*");
     server.setHandler(context);
-    server.start();
 
-    String resolvedCatalogUri =
-        "http://" + connector.getHost() + ":" + connector.getLocalPort();
-    return new EmbeddedRestCatalogServer(null, server, catalog, resolvedCatalogUri);
-  }
-
-  private static EmbeddedRestCatalogServer start(String catalogUri, Map<String, String> config)
-      throws Exception {
-    URI uri = URI.create(catalogUri);
-    int port = uri.getPort() == -1 ? RESTCatalogServer.REST_PORT_DEFAULT : uri.getPort();
-
-    Map<String, String> mergedConfig = new HashMap<>(config);
-    mergedConfig.put(RESTCatalogServer.REST_PORT, String.valueOf(port));
-
-    RESTCatalogServer server = new RESTCatalogServer(mergedConfig);
-    server.start(false);
-    return new EmbeddedRestCatalogServer(server, null, null, catalogUri);
+    try {
+      server.start();
+      return new EmbeddedRestCatalogServer(
+          server, backendCatalog, resolvedCatalogUri(connector), temporaryCatalogDir);
+    } catch (Exception e) {
+      backendCatalog.close();
+      deleteRecursively(temporaryCatalogDir);
+      throw e;
+    }
   }
 
   public String catalogUri() {
@@ -107,14 +117,60 @@ public final class EmbeddedRestCatalogServer implements AutoCloseable {
 
   @Override
   public void close() throws Exception {
+    Exception stopFailure = null;
+
     if (server != null) {
-      server.stop();
+      try {
+        server.stop();
+      } catch (Exception e) {
+        stopFailure = e;
+      }
     }
-    if (jdbcServer != null) {
-      jdbcServer.stop();
+
+    if (backendCatalog != null) {
+      backendCatalog.close();
     }
-    if (jdbcCatalog != null) {
-      jdbcCatalog.close();
+
+    deleteRecursively(temporaryCatalogDir);
+
+    if (stopFailure != null) {
+      throw stopFailure;
+    }
+  }
+
+  private static boolean usesInMemoryFileIO(String warehousePath) {
+    return warehousePath.startsWith("in-memory://");
+  }
+
+  private static String sqliteCatalogUri(Path catalogDir) {
+    return "jdbc:sqlite:" + catalogDir.resolve("catalog.db").toAbsolutePath();
+  }
+
+  private static String resolvedCatalogUri(ServerConnector connector) {
+    String host = connector.getHost();
+    if (host == null || host.isBlank()) {
+      host = "localhost";
+    }
+    return "http://" + host + ":" + connector.getLocalPort();
+  }
+
+  private static void deleteRecursively(Path root) {
+    if (root == null) {
+      return;
+    }
+
+    try (Stream<Path> paths = Files.walk(root)) {
+      paths.sorted(Comparator.reverseOrder())
+          .forEach(
+              path -> {
+                try {
+                  Files.deleteIfExists(path);
+                } catch (IOException e) {
+                  throw new RuntimeException("Unable to delete " + path, e);
+                }
+              });
+    } catch (IOException e) {
+      throw new RuntimeException("Unable to clean up " + root, e);
     }
   }
 }

@@ -1,7 +1,6 @@
 package io.github.manuzhang.iceberg.examples;
 
 import java.io.IOException;
-import java.nio.file.Files;
 import java.util.List;
 import java.util.Map;
 import org.apache.beam.sdk.Pipeline;
@@ -171,7 +170,9 @@ public class BeamIcebergCdcExample {
 
       return snapshot.snapshotId();
     } finally {
-      catalog.close();
+      if (!BeamIcebergExample.usesInMemoryWarehouse(warehousePath)) {
+        catalog.close();
+      }
     }
   }
 
@@ -189,14 +190,13 @@ public class BeamIcebergCdcExample {
     return defaultValue;
   }
 
-  private static String configuredWarehouse(String[] args) throws IOException {
-    String configuredWarehouse =
-        configuredValue(args, 1, "ICEBERG_WAREHOUSE", null);
+  private static String configuredWarehouse(String[] args) {
+    String configuredWarehouse = configuredValue(args, 1, "ICEBERG_WAREHOUSE", null);
     if (configuredWarehouse != null) {
       return configuredWarehouse;
     }
 
-    return Files.createTempDirectory("iceberg-beam-cdc-warehouse").toUri().toString();
+    return BeamIcebergExample.newInMemoryWarehousePath("iceberg-beam-cdc-warehouse");
   }
 
   private static EmbeddedRestCatalogServer maybeStartLocalRestCatalog(
