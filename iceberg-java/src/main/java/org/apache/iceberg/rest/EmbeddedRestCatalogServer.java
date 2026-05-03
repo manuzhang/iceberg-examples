@@ -8,6 +8,8 @@ import java.util.HashMap;
 import java.util.Map;
 import org.apache.iceberg.CatalogProperties;
 import org.apache.iceberg.hadoop.HadoopCatalog;
+import org.apache.iceberg.inmemory.InMemoryFileIO;
+import org.apache.iceberg.jdbc.JdbcCatalog;
 
 public final class EmbeddedRestCatalogServer implements AutoCloseable {
   private final RESTCatalogServer server;
@@ -37,15 +39,31 @@ public final class EmbeddedRestCatalogServer implements AutoCloseable {
 
   public static EmbeddedRestCatalogServer start(String catalogUri, String warehousePath)
       throws Exception {
+    Map<String, String> config = new HashMap<>();
+    config.put(CatalogProperties.CATALOG_IMPL, HadoopCatalog.class.getName());
+    config.put(CatalogProperties.WAREHOUSE_LOCATION, warehousePath);
+    return start(catalogUri, config);
+  }
+
+  public static EmbeddedRestCatalogServer startJdbcSqliteInMemoryFileIO(
+      String catalogUri, String jdbcUri, String warehousePath) throws Exception {
+    Map<String, String> config = new HashMap<>();
+    config.put(CatalogProperties.CATALOG_IMPL, JdbcCatalog.class.getName());
+    config.put(CatalogProperties.URI, jdbcUri);
+    config.put(CatalogProperties.FILE_IO_IMPL, InMemoryFileIO.class.getName());
+    config.put(CatalogProperties.WAREHOUSE_LOCATION, warehousePath);
+    return start(catalogUri, config);
+  }
+
+  private static EmbeddedRestCatalogServer start(String catalogUri, Map<String, String> config)
+      throws Exception {
     URI uri = URI.create(catalogUri);
     int port = uri.getPort() == -1 ? RESTCatalogServer.REST_PORT_DEFAULT : uri.getPort();
 
-    Map<String, String> config = new HashMap<>();
-    config.put(RESTCatalogServer.REST_PORT, String.valueOf(port));
-    config.put(CatalogProperties.CATALOG_IMPL, HadoopCatalog.class.getName());
-    config.put(CatalogProperties.WAREHOUSE_LOCATION, warehousePath);
+    Map<String, String> mergedConfig = new HashMap<>(config);
+    mergedConfig.put(RESTCatalogServer.REST_PORT, String.valueOf(port));
 
-    RESTCatalogServer server = new RESTCatalogServer(config);
+    RESTCatalogServer server = new RESTCatalogServer(mergedConfig);
     server.start(false);
     return new EmbeddedRestCatalogServer(server);
   }
