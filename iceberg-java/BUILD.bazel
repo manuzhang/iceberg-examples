@@ -46,7 +46,7 @@ java_library(
 
 java_library(
     name = "lib",
-    deps = [
+    exports = [
         ":beam_lib",
         ":core_lib",
     ],
