@@ -1,19 +1,42 @@
 package(default_visibility = ["//visibility:public"])
 
 java_library(
-    name = "lib",
-    srcs = glob(["src/main/java/**/*.java"]),
+    name = "core_lib",
+    srcs = [
+        "src/main/java/io/github/manuzhang/iceberg/examples/DataOperationsExample.java",
+        "src/main/java/io/github/manuzhang/iceberg/examples/IcebergExamples.java",
+        "src/main/java/io/github/manuzhang/iceberg/examples/RowLevelUpsertExample.java",
+        "src/main/java/io/github/manuzhang/iceberg/examples/SchemaEvolutionExample.java",
+        "src/main/java/io/github/manuzhang/iceberg/examples/SharedInMemoryFileIO.java",
+        "src/main/java/io/github/manuzhang/iceberg/examples/TableFormatV3Example.java",
+        "src/main/java/org/apache/iceberg/rest/EmbeddedRestCatalogServer.java",
+    ],
     deps = [
-        "@maven//:org_apache_beam_beam_runners_direct_java",
-        "@maven//:org_apache_beam_beam_sdks_java_core",
-        "@maven//:org_apache_beam_beam_sdks_java_io_iceberg",
-        "@maven//:org_apache_beam_beam_sdks_java_managed",
-        "@maven//:org_apache_hadoop_hadoop_common",
         "@maven//:org_apache_iceberg_iceberg_api",
         "@maven//:org_apache_iceberg_iceberg_core",
         "@maven//:org_apache_iceberg_iceberg_data",
         "@maven//:org_apache_iceberg_iceberg_open_api",
-        "@maven//:org_apache_iceberg_iceberg_open_api_test_fixtures",
+        "@maven//:org_slf4j_slf4j_api",
+        "@maven//:org_slf4j_slf4j_simple",
+        "@maven//:org_xerial_sqlite_jdbc",
+    ],
+)
+
+java_library(
+    name = "beam_lib",
+    srcs = [
+        "src/main/java/io/github/manuzhang/iceberg/examples/BeamIcebergCdcExample.java",
+        "src/main/java/io/github/manuzhang/iceberg/examples/BeamIcebergExample.java",
+    ],
+    deps = [
+        ":core_lib",
+        "@maven//:org_apache_beam_beam_runners_direct_java",
+        "@maven//:org_apache_beam_beam_sdks_java_core",
+        "@maven//:org_apache_beam_beam_sdks_java_io_iceberg",
+        "@maven//:org_apache_beam_beam_sdks_java_managed",
+        "@maven//:org_apache_iceberg_iceberg_api",
+        "@maven//:org_apache_iceberg_iceberg_core",
+        "@maven//:org_apache_iceberg_iceberg_open_api",
         "@maven//:org_slf4j_slf4j_api",
         "@maven//:org_slf4j_slf4j_simple",
         "@maven//:org_xerial_sqlite_jdbc",
@@ -21,38 +44,42 @@ java_library(
     ],
 )
 
+java_library(
+    name = "lib",
+    exports = [
+        ":beam_lib",
+        ":core_lib",
+    ],
+)
+
 java_binary(
     name = "iceberg_examples",
     main_class = "io.github.manuzhang.iceberg.examples.IcebergExamples",
-    runtime_deps = [":lib"],
+    runtime_deps = [":core_lib"],
 )
 
 java_binary(
     name = "data_operations_example",
     main_class = "io.github.manuzhang.iceberg.examples.DataOperationsExample",
-    runtime_deps = [":lib"],
+    runtime_deps = [":core_lib"],
 )
 
 java_binary(
     name = "schema_evolution_example",
     main_class = "io.github.manuzhang.iceberg.examples.SchemaEvolutionExample",
-    runtime_deps = [":lib"],
+    runtime_deps = [":core_lib"],
 )
 
 java_binary(
     name = "table_format_v3_example",
     main_class = "io.github.manuzhang.iceberg.examples.TableFormatV3Example",
-    runtime_deps = [":lib"],
+    runtime_deps = [":core_lib"],
 )
 
 java_binary(
     name = "row_level_upsert_example",
     main_class = "io.github.manuzhang.iceberg.examples.RowLevelUpsertExample",
-    runtime_deps = [
-        # Keep Iceberg open-api before Hadoop's Jetty 9 transitive jars for RESTCatalogServer.
-        "@maven//:org_apache_iceberg_iceberg_open_api",
-        ":lib",
-    ],
+    runtime_deps = [":core_lib"],
 )
 
 java_binary(
@@ -61,7 +88,7 @@ java_binary(
     runtime_deps = [
         # Keep Iceberg open-api before Hadoop's Jetty 9 transitive jars for RESTCatalogServer.
         "@maven//:org_apache_iceberg_iceberg_open_api",
-        ":lib",
+        ":beam_lib",
     ],
 )
 
@@ -71,7 +98,7 @@ java_binary(
     runtime_deps = [
         # Keep Iceberg open-api before Hadoop's Jetty 9 transitive jars for RESTCatalogServer.
         "@maven//:org_apache_iceberg_iceberg_open_api",
-        ":lib",
+        ":beam_lib",
     ],
 )
 
@@ -80,7 +107,7 @@ java_test(
     srcs = ["src/test/java/io/github/manuzhang/iceberg/examples/IcebergExamplesTest.java"],
     test_class = "io.github.manuzhang.iceberg.examples.IcebergExamplesTest",
     deps = [
-        ":lib",
+        ":core_lib",
         "@maven//:junit_junit",
         "@maven//:org_apache_iceberg_iceberg_api",
     ],
@@ -91,7 +118,7 @@ java_test(
     srcs = ["src/test/java/io/github/manuzhang/iceberg/examples/BeamIcebergCdcExampleTest.java"],
     test_class = "io.github.manuzhang.iceberg.examples.BeamIcebergCdcExampleTest",
     deps = [
-        ":lib",
+        ":beam_lib",
         "@maven//:junit_junit",
         "@maven//:org_apache_beam_beam_runners_direct_java",
         "@maven//:org_apache_beam_beam_sdks_java_io_iceberg",
@@ -104,7 +131,7 @@ java_test(
     srcs = ["src/test/java/io/github/manuzhang/iceberg/examples/BeamIcebergExampleTest.java"],
     test_class = "io.github.manuzhang.iceberg.examples.BeamIcebergExampleTest",
     deps = [
-        ":lib",
+        ":beam_lib",
         "@maven//:junit_junit",
         "@maven//:org_apache_beam_beam_runners_direct_java",
         "@maven//:org_apache_beam_beam_sdks_java_io_iceberg",
@@ -117,9 +144,7 @@ java_test(
     srcs = ["src/test/java/io/github/manuzhang/iceberg/examples/RowLevelUpsertExampleTest.java"],
     test_class = "io.github.manuzhang.iceberg.examples.RowLevelUpsertExampleTest",
     deps = [
-        # Keep Iceberg open-api before Hadoop's Jetty 9 transitive jars for RESTCatalogServer.
-        "@maven//:org_apache_iceberg_iceberg_open_api",
-        ":lib",
+        ":core_lib",
         "@maven//:junit_junit",
         "@maven//:org_apache_iceberg_iceberg_api",
         "@maven//:org_apache_iceberg_iceberg_core",
