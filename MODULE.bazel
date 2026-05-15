@@ -24,9 +24,9 @@ maven.install(
         "org.yaml:snakeyaml:2.2",
     ],
     repositories = [
-        "https://repository.apache.org/content/repositories/orgapacheiceberg-1281/",
         "https://repo.maven.apache.org/maven2",
         "https://repo1.maven.org/maven2",
+        "https://repository.apache.org/content/repositories/orgapacheiceberg-1281/",
     ],
 )
 use_repo(maven, "maven")
