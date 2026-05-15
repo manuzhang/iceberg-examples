@@ -17,6 +17,7 @@ maven.install(
         "org.apache.beam:beam-sdks-java-managed:2.72.0",
         "org.apache.iceberg:iceberg-api:1.10.2",
         "org.apache.iceberg:iceberg-core:1.10.2",
+        "org.apache.iceberg:iceberg-core:jar:tests:1.10.2",
         "org.apache.iceberg:iceberg-data:1.10.2",
         "org.apache.iceberg:iceberg-open-api:1.10.2",
         "org.eclipse.jetty:jetty-server:11.0.26",
