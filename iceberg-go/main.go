@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"io"
 	"os"
@@ -90,7 +91,18 @@ func run(w io.Writer) error {
 }
 
 func main() {
-	if err := run(os.Stdout); err != nil {
+	var err error
+	if len(os.Args) > 1 && os.Args[1] == "rest-catalog" {
+		var cfg restCatalogConfig
+		cfg, err = restCatalogConfigFromEnv(os.Getenv)
+		if err == nil {
+			err = runRestCatalogExample(context.Background(), os.Stdout, cfg)
+		}
+	} else {
+		err = run(os.Stdout)
+	}
+
+	if err != nil {
 		fmt.Fprintf(os.Stderr, "iceberg-go example failed: %v\n", err)
 		os.Exit(1)
 	}

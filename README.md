@@ -49,7 +49,7 @@ steps.
 |-----------|----------|-------------|
 | [`iceberg-java/`](iceberg-java/) | Java | Examples using the Apache Iceberg Java API, including Apache Beam |
 | [`iceberg-rust/`](iceberg-rust/) | Rust | Examples using the Apache Iceberg Rust API |
-| [`iceberg-go/`](iceberg-go/) | Go | Metadata example using the Apache Iceberg Go API |
+| [`iceberg-go/`](iceberg-go/) | Go | Metadata and REST catalog read/write examples using the Apache Iceberg Go API |
 | [`iceberg-spark/`](iceberg-spark/) | Python / SQL | Spark 4.1 Declarative Pipelines with Apache Iceberg |
 | [`iceberg-flink/`](iceberg-flink/) | SQL | Flink SQL Iceberg catalog and table workflow example |
 | [`iceberg-cpp/`](iceberg-cpp/) | C++ | Minimal Iceberg-style schema modeling example in C++ |
