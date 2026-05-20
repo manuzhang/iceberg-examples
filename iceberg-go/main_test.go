@@ -39,10 +39,10 @@ func TestPartitionSpecBindsToSchema(t *testing.T) {
 	if spec.NumFields() != 2 {
 		t.Fatalf("spec.NumFields() = %d, want 2", spec.NumFields())
 	}
-	if field := spec.Field(0); field.SourceID != 3 || field.FieldID != 1000 {
+	if field := spec.Field(0); field.SourceID() != 3 || field.FieldID != 1000 {
 		t.Fatalf("first partition field = %+v, want source id 3 and field id 1000", field)
 	}
-	if field := spec.Field(1); field.SourceID != 2 || field.FieldID != 1001 {
+	if field := spec.Field(1); field.SourceID() != 2 || field.FieldID != 1001 {
 		t.Fatalf("second partition field = %+v, want source id 2 and field id 1001", field)
 	}
 }

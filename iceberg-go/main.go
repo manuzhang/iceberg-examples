@@ -80,8 +80,8 @@ func run(w io.Writer) error {
 
 	fmt.Fprintf(w, "partition spec id: %d\n", spec.ID())
 	fmt.Fprintf(w, "partition fields:\n")
-	for field := range spec.Fields() {
-		fmt.Fprintf(w, "- %d %s %s(%d)\n", field.FieldID, field.Name, field.Transform, field.SourceID)
+	for _, field := range spec.Fields() {
+		fmt.Fprintf(w, "- %d %s %s(%d)\n", field.FieldID, field.Name, field.Transform, field.SourceID())
 	}
 
 	partitionType := spec.PartitionType(schema)
