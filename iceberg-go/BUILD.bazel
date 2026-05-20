@@ -1,0 +1,21 @@
+load("@rules_go//go:def.bzl", "go_binary", "go_library", "go_test")
+
+package(default_visibility = ["//visibility:public"])
+
+go_library(
+    name = "go_default_library",
+    srcs = ["main.go"],
+    importpath = "github.com/manuzhang/iceberg-examples/iceberg-go",
+    deps = ["@com_github_apache_iceberg_go//:iceberg-go"],
+)
+
+go_binary(
+    name = "iceberg_go_example",
+    embed = [":go_default_library"],
+)
+
+go_test(
+    name = "iceberg_go_test",
+    srcs = ["main_test.go"],
+    embed = [":go_default_library"],
+)

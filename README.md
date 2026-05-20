@@ -28,6 +28,7 @@ bazel run //iceberg-java:schema_evolution_example
 bazel run //iceberg-java:table_format_v3_example
 bazel run //iceberg-java:beam_iceberg_example
 bazel run //iceberg-rust:iceberg_rust_examples
+bazel run //iceberg-go:iceberg_go_example
 bazel run //iceberg-cpp:iceberg_cpp_example
 ```
 
@@ -48,6 +49,7 @@ steps.
 |-----------|----------|-------------|
 | [`iceberg-java/`](iceberg-java/) | Java | Examples using the Apache Iceberg Java API, including Apache Beam |
 | [`iceberg-rust/`](iceberg-rust/) | Rust | Examples using the Apache Iceberg Rust API |
+| [`iceberg-go/`](iceberg-go/) | Go | Metadata example using the Apache Iceberg Go API |
 | [`iceberg-spark/`](iceberg-spark/) | Python / SQL | Spark 4.1 Declarative Pipelines with Apache Iceberg |
 | [`iceberg-flink/`](iceberg-flink/) | SQL | Flink SQL Iceberg catalog and table workflow example |
 | [`iceberg-cpp/`](iceberg-cpp/) | C++ | Minimal Iceberg-style schema modeling example in C++ |
@@ -57,6 +59,7 @@ steps.
 - `MODULE.bazel` defines the shared Maven, Rust crate, and PyPI dependencies.
 - `iceberg-java/BUILD.bazel` exposes Java libraries, runnable examples, and tests.
 - `iceberg-rust/BUILD.bazel` exposes the Rust example binary and unit tests.
+- `iceberg-go/BUILD.bazel` exposes the Go example binary and unit tests.
 - `iceberg-spark/BUILD.bazel` validates the Spark Python examples and exports the SQL pipeline.
 - `iceberg-flink/BUILD.bazel` exports and validates the Flink SQL Iceberg example script.
 - `iceberg-cpp/BUILD.bazel` builds a runnable C++ Iceberg-style schema example.
@@ -66,6 +69,7 @@ steps.
 - [Apache Iceberg Documentation](https://iceberg.apache.org/)
 - [Iceberg Java API Quickstart](https://iceberg.apache.org/docs/latest/java-api-quickstart/)
 - [Apache Iceberg Rust Documentation](https://rust.iceberg.apache.org/)
+- [Apache Iceberg Go Documentation](https://go.iceberg.apache.org/)
 - [Apache Beam IcebergIO Documentation](https://beam.apache.org/documentation/io/built-in/iceberg/)
 - [Iceberg Table Format Specification](https://iceberg.apache.org/spec/)
 - [Apache Iceberg Flink Integration](https://iceberg.apache.org/docs/latest/flink/)
