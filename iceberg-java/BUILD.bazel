@@ -150,6 +150,7 @@ java_test(
         "@maven//:junit_junit",
         "@maven//:org_apache_iceberg_iceberg_api",
         "@maven//:org_apache_iceberg_iceberg_core",
+        "@maven//:org_apache_iceberg_iceberg_core_tests",
         "@maven//:org_apache_iceberg_iceberg_data",
     ],
 )
