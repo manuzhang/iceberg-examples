@@ -52,7 +52,7 @@ steps.
 | [`iceberg-go/`](iceberg-go/) | Go | Metadata and REST catalog read/write examples using the Apache Iceberg Go API |
 | [`iceberg-spark/`](iceberg-spark/) | Python / SQL | Spark 4.1 Declarative Pipelines with Apache Iceberg |
 | [`iceberg-flink/`](iceberg-flink/) | SQL | Flink SQL Iceberg catalog and table workflow example |
-| [`iceberg-cpp/`](iceberg-cpp/) | C++ | Minimal Iceberg-style schema modeling example in C++ |
+| [`iceberg-cpp/`](iceberg-cpp/) | C++ | Minimal Iceberg-style schema modeling example aligned with Apache `iceberg-cpp` 0.3.0 |
 
 ## Repository Layout
 
@@ -62,7 +62,7 @@ steps.
 - `iceberg-go/BUILD.bazel` exposes the Go example binary and unit tests.
 - `iceberg-spark/BUILD.bazel` validates the Spark Python examples and exports the SQL pipeline.
 - `iceberg-flink/BUILD.bazel` exports and validates the Flink SQL Iceberg example script.
-- `iceberg-cpp/BUILD.bazel` builds a runnable C++ Iceberg-style schema example.
+- `iceberg-cpp/BUILD.bazel` builds a runnable C++ Iceberg-style schema example aligned with Apache `iceberg-cpp` 0.3.0.
 
 ## Learning Resources
 

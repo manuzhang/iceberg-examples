@@ -1,10 +1,14 @@
 // Inspired by the upstream Apache Iceberg C++ demo example:
-// https://github.com/apache/iceberg-cpp/blob/main/example/demo_example.cc
+// https://github.com/apache/iceberg-cpp/blob/v0.3.0/example/demo_example.cc
 
 #include <iostream>
 #include <string>
 #include <utility>
 #include <vector>
+
+#ifndef ICEBERG_CPP_UPSTREAM_VERSION
+#define ICEBERG_CPP_UPSTREAM_VERSION "0.3.0"
+#endif
 
 struct Field {
   int id;
@@ -50,6 +54,8 @@ int main() {
 
   std::cout << "Apache Iceberg C++ Example\n";
   std::cout << "==========================\n";
+  std::cout << "Upstream iceberg-cpp reference: " << ICEBERG_CPP_UPSTREAM_VERSION
+            << "\n";
   std::cout << "Table: " << table.name() << "\n\n";
 
   std::cout << "Schema fields:\n";

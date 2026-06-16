@@ -2,5 +2,6 @@ package(default_visibility = ["//visibility:public"])
 
 cc_binary(
     name = "iceberg_cpp_example",
+    defines = ["ICEBERG_CPP_UPSTREAM_VERSION=\\\"0.3.0\\\""],
     srcs = ["src/main.cc"],
 )
