@@ -17,6 +17,8 @@ java_library(
         "@maven//:org_apache_iceberg_iceberg_core_tests",
         "@maven//:org_apache_iceberg_iceberg_data",
         "@maven//:org_apache_iceberg_iceberg_open_api",
+        "@maven//:org_apache_iceberg_iceberg_orc",
+        "@maven//:org_apache_iceberg_iceberg_parquet",
         "@maven//:org_eclipse_jetty_jetty_server",
         "@maven//:org_eclipse_jetty_jetty_servlet",
         "@maven//:org_slf4j_slf4j_api",
