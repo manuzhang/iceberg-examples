@@ -4,7 +4,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import org.apache.iceberg.Schema;
@@ -148,12 +147,12 @@ public class IcebergExamplesTest {
     assertNotNull(geographyCrs84);
     assertNotNull(geographySpherical);
 
-    // crs84() stores null internally (the default CRS); custom CRS stores the given string
-    assertNull(geometryCrs84.crs());
+    // crs84() exposes the default CRS; custom CRS exposes the given string
+    assertEquals(Types.GeometryType.DEFAULT_CRS, geometryCrs84.crs());
     assertEquals("EPSG:4326", geometryCustom.crs());
-    // crs84() stores null internally for both crs and algorithm
-    assertNull(geographyCrs84.crs());
-    assertNull(geographyCrs84.algorithm());
+    assertEquals(Types.GeographyType.DEFAULT_CRS, geographyCrs84.crs());
+    assertEquals(Types.GeographyType.DEFAULT_ALGORITHM, geographyCrs84.algorithm());
+    assertEquals(Types.GeographyType.DEFAULT_CRS, geographySpherical.crs());
     assertEquals(EdgeAlgorithm.SPHERICAL, geographySpherical.algorithm());
   }
 
