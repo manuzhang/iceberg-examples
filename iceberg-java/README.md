@@ -12,6 +12,7 @@ Apache Iceberg is an open table format for huge analytic datasets. These example
 - Schema evolution concepts
 - Table format v3 features
 - Row-level upserts with v3 deletion vectors
+- Third-party changelog planning for v3 deletion vectors
 - Apache Beam integration with Iceberg tables
 - Apache Beam CDC reads from Iceberg snapshots
 
@@ -42,6 +43,7 @@ bazel run //iceberg-java:data_operations_example
 bazel run //iceberg-java:schema_evolution_example
 bazel run //iceberg-java:table_format_v3_example
 bazel run //iceberg-java:row_level_upsert_example
+bazel run //iceberg-java:deletion_vector_changelog_example
 bazel run //iceberg-java:beam_iceberg_example
 bazel run //iceberg-java:beam_iceberg_cdc_example
 ```
@@ -134,7 +136,15 @@ bazel test --config=jdk21 //iceberg-java:all
 - Committing a row-level upsert with `RowDelta`
 - Verifying that readers only see the replacement row after the upsert
 
-### 6. Apache Beam + Iceberg (`BeamIcebergExample.java`)
+### 6. Deletion Vector Changelog (`DeletionVectorChangelogExample.java`)
+
+- Demonstrating the boundary for a third-party changelog planner
+- Reading snapshot file-change metadata through Iceberg's public APIs
+- Emitting metadata events for added data files and rows deleted by Puffin deletion vectors
+- Rejecting equality deletes and non-DV position deletes
+- Verifying the planned changelog against a v3 DV-backed row-level upsert
+
+### 7. Apache Beam + Iceberg (`BeamIcebergExample.java`)
 
 - Defining a Beam schema that maps to an Iceberg table
 - Writing rows with `Managed.write("iceberg")`
@@ -143,7 +153,7 @@ bazel test --config=jdk21 //iceberg-java:all
 - Running Iceberg's embedded `RESTCatalogServer` with SQLite metadata for the default example
 - Running pipelines locally with the DirectRunner
 
-### 7. Apache Beam + Iceberg CDC (`BeamIcebergCdcExample.java`)
+### 8. Apache Beam + Iceberg CDC (`BeamIcebergCdcExample.java`)
 
 - Writing ordinary customer rows to Iceberg across two snapshots
 - Capturing Iceberg snapshot IDs after each Beam write

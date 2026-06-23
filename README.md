@@ -26,6 +26,7 @@ bazel run //iceberg-java:iceberg_examples
 bazel run //iceberg-java:data_operations_example
 bazel run //iceberg-java:schema_evolution_example
 bazel run //iceberg-java:table_format_v3_example
+bazel run //iceberg-java:deletion_vector_changelog_example
 bazel run //iceberg-java:beam_iceberg_example
 bazel run //iceberg-rust:iceberg_rust_examples
 bazel run //iceberg-go:iceberg_go_example
