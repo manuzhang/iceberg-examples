@@ -19,6 +19,7 @@ import org.apache.iceberg.Schema;
 import org.apache.iceberg.Snapshot;
 import org.apache.iceberg.Table;
 import org.apache.iceberg.TableProperties;
+import org.apache.iceberg.TableUtil;
 import org.apache.iceberg.catalog.Namespace;
 import org.apache.iceberg.catalog.TableIdentifier;
 import org.apache.iceberg.data.GenericAppenderFactory;
@@ -415,7 +416,7 @@ public class DeletionVectorChangelogExample {
     }
 
     private static int formatVersion(Table table) {
-      return Integer.parseInt(table.properties().getOrDefault(TableProperties.FORMAT_VERSION, "1"));
+      return TableUtil.formatVersion(table);
     }
   }
 }
