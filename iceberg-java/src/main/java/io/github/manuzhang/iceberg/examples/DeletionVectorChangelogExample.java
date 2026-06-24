@@ -328,8 +328,9 @@ public class DeletionVectorChangelogExample {
       DeleteFile deletionVectorFile) {}
 
   public record ChangelogEvent(
-      ChangelogOperation type,
-      long snapshotId,
+      ChangelogOperation changeType,
+      int changeOrdinal,
+      long commitSnapshotId,
       String dataFileLocation,
       long recordCount,
       String deletionVectorLocation,
@@ -346,20 +347,24 @@ public class DeletionVectorChangelogExample {
       }
 
       List<ChangelogEvent> events = new ArrayList<>();
-      for (Snapshot snapshot :
-          snapshotsBetween(table, fromSnapshotExclusive, toSnapshotInclusive)) {
+      List<Snapshot> snapshots =
+          snapshotsBetween(table, fromSnapshotExclusive, toSnapshotInclusive);
+
+      int changeOrdinal = 0;
+      for (Snapshot snapshot : snapshots) {
         if (!shouldPlanSnapshotOperation(snapshot.operation())) {
           continue;
         }
 
-        events.addAll(addedRows(table, snapshot));
-        events.addAll(addedDeletionVectors(table, snapshot));
-        events.addAll(removedDataFiles(table, snapshot));
+        events.addAll(addedRows(table, snapshot, changeOrdinal));
+        events.addAll(addedDeletionVectors(table, snapshot, changeOrdinal));
+        events.addAll(removedDataFiles(table, snapshot, changeOrdinal));
+        changeOrdinal++;
       }
 
       events.sort(
-          Comparator.comparingLong(ChangelogEvent::snapshotId)
-              .thenComparing(event -> event.type().ordinal())
+          Comparator.comparingInt(ChangelogEvent::changeOrdinal)
+              .thenComparing(event -> event.changeType().ordinal())
               .thenComparing(ChangelogEvent::dataFileLocation));
       return Collections.unmodifiableList(events);
     }
@@ -382,13 +387,15 @@ public class DeletionVectorChangelogExample {
           && deleteFile.contentSizeInBytes() != null;
     }
 
-    private List<ChangelogEvent> addedRows(Table table, Snapshot snapshot) {
+    private List<ChangelogEvent> addedRows(
+        Table table, Snapshot snapshot, int changeOrdinal) {
       List<ChangelogEvent> events = new ArrayList<>();
 
       for (DataFile dataFile : snapshot.addedDataFiles(table.io())) {
         events.add(
             new ChangelogEvent(
                 ChangelogOperation.INSERT,
+                changeOrdinal,
                 snapshot.snapshotId(),
                 dataFile.location(),
                 dataFile.recordCount(),
@@ -400,7 +407,8 @@ public class DeletionVectorChangelogExample {
       return events;
     }
 
-    private List<ChangelogEvent> addedDeletionVectors(Table table, Snapshot snapshot) {
+    private List<ChangelogEvent> addedDeletionVectors(
+        Table table, Snapshot snapshot, int changeOrdinal) {
       List<ChangelogEvent> events = new ArrayList<>();
 
       for (DeleteFile deleteFile : snapshot.addedDeleteFiles(table.io())) {
@@ -408,6 +416,7 @@ public class DeletionVectorChangelogExample {
         events.add(
             new ChangelogEvent(
                 ChangelogOperation.DELETE,
+                changeOrdinal,
                 snapshot.snapshotId(),
                 deleteFile.referencedDataFile(),
                 deleteFile.recordCount(),
@@ -419,7 +428,8 @@ public class DeletionVectorChangelogExample {
       return events;
     }
 
-    private List<ChangelogEvent> removedDataFiles(Table table, Snapshot snapshot) {
+    private List<ChangelogEvent> removedDataFiles(
+        Table table, Snapshot snapshot, int changeOrdinal) {
       List<ChangelogEvent> events = new ArrayList<>();
       Map<String, DeleteFile> removedDvsByDataFile =
           removedDeletionVectorsByDataFile(table, snapshot);
@@ -427,14 +437,20 @@ public class DeletionVectorChangelogExample {
       for (DataFile dataFile : snapshot.removedDataFiles(table.io())) {
         events.add(
             removedDataFileEvent(
-                snapshot.snapshotId(), dataFile, removedDvsByDataFile.get(dataFile.location())));
+                changeOrdinal,
+                snapshot.snapshotId(),
+                dataFile,
+                removedDvsByDataFile.get(dataFile.location())));
       }
 
       return events;
     }
 
     static ChangelogEvent removedDataFileEvent(
-        long snapshotId, DataFile dataFile, DeleteFile removedDeletionVector) {
+        int changeOrdinal,
+        long commitSnapshotId,
+        DataFile dataFile,
+        DeleteFile removedDeletionVector) {
       long recordCount = dataFile.recordCount();
       String deletionVectorLocation = null;
       Long deletionVectorOffset = null;
@@ -456,7 +472,8 @@ public class DeletionVectorChangelogExample {
 
       return new ChangelogEvent(
           ChangelogOperation.DELETE,
-          snapshotId,
+          changeOrdinal,
+          commitSnapshotId,
           dataFile.location(),
           recordCount,
           deletionVectorLocation,
