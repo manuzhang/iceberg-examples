@@ -118,6 +118,15 @@ public class DeletionVectorChangelogExample {
       long fromSnapshotId = table.currentSnapshot().snapshotId();
 
       ExistingCustomerRow existingRow = findCustomerRow(table, UPDATED_CUSTOMER_ID);
+      if (!initialDataFile.location().equals(existingRow.filePath())) {
+        throw new IllegalStateException(
+            "Expected customer_id="
+                + UPDATED_CUSTOMER_ID
+                + " to be located in "
+                + initialDataFile.location()
+                + " but found "
+                + existingRow.filePath());
+      }
       DeleteFile deletionVectorFile =
           writeDeletionVector(
               table, initialDataFile, existingRow.rowPosition(), "dv-changelog-delete", 2L);
@@ -317,7 +326,6 @@ public class DeletionVectorChangelogExample {
       Long deletionVectorOffset,
       Long deletionVectorSize) {}
 
-  @SuppressWarnings("deprecation")
   public static class DvOnlyChangelogPlanner {
 
     public List<ChangelogEvent> plan(
