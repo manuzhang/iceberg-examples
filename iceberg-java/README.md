@@ -142,6 +142,8 @@ bazel test --config=jdk21 //iceberg-java:all
 - Reading snapshot file-change metadata through Iceberg's public APIs
 - Emitting the full source row schema followed by Iceberg's CDC metadata columns:
   `_change_type`, `_change_ordinal`, and `_commit_snapshot_id`
+- Producing raw changelog events and net changes that remove opposite
+  `INSERT`/`DELETE` pairs for identical source rows
 - Handling rows from added data files, Puffin deletion vectors, and removed data files
 - Rejecting equality deletes and non-DV position deletes
 - Verifying the planned changelog against a v3 DV-backed row-level upsert

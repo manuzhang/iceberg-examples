@@ -34,7 +34,7 @@ public class DeletionVectorChangelogExampleTest {
 
       List<DeletionVectorChangelogExample.ChangelogEvent> events = result.events();
       assertChangelogSchema(result.changelogSchema());
-      assertEquals(4, events.size());
+      assertEquals(6, events.size());
 
       DeletionVectorChangelogExample.ChangelogEvent addedRows = events.get(0);
       assertEvent(
@@ -66,9 +66,64 @@ public class DeletionVectorChangelogExampleTest {
           0,
           addedRows._commit_snapshot_id());
 
-      DeletionVectorChangelogExample.ChangelogEvent removedDataFile = events.get(3);
+      DeletionVectorChangelogExample.ChangelogEvent addedTransientRow = events.get(3);
+      assertEvent(
+          addedTransientRow,
+          5L,
+          "Eve Stone",
+          "trial",
+          ChangelogOperation.INSERT,
+          0,
+          addedRows._commit_snapshot_id());
+
+      DeletionVectorChangelogExample.ChangelogEvent removedDataFile = events.get(4);
       assertEvent(
           removedDataFile,
+          4L,
+          "Dave Kim",
+          "silver",
+          ChangelogOperation.DELETE,
+          1,
+          result.toSnapshotId());
+
+      DeletionVectorChangelogExample.ChangelogEvent removedTransientRow = events.get(5);
+      assertEvent(
+          removedTransientRow,
+          5L,
+          "Eve Stone",
+          "trial",
+          ChangelogOperation.DELETE,
+          1,
+          result.toSnapshotId());
+
+      List<DeletionVectorChangelogExample.ChangelogEvent> netEvents = result.netChangeEvents();
+      assertEquals(4, netEvents.size());
+      assertEvent(
+          netEvents.get(0),
+          2L,
+          "Bob Smith",
+          "gold",
+          ChangelogOperation.INSERT,
+          0,
+          addedRows._commit_snapshot_id());
+      assertEvent(
+          netEvents.get(1),
+          2L,
+          "Bob Smith",
+          "bronze",
+          ChangelogOperation.DELETE,
+          0,
+          addedRows._commit_snapshot_id());
+      assertEvent(
+          netEvents.get(2),
+          3L,
+          "Carol Lee",
+          "bronze",
+          ChangelogOperation.INSERT,
+          0,
+          addedRows._commit_snapshot_id());
+      assertEvent(
+          netEvents.get(3),
           4L,
           "Dave Kim",
           "silver",

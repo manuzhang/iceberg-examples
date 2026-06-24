@@ -4,9 +4,12 @@ import java.io.EOFException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Deque;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import org.apache.iceberg.CatalogProperties;
@@ -52,8 +55,9 @@ import org.slf4j.LoggerFactory;
  * <p>This intentionally does not plug into Iceberg's {@code IncrementalChangelogScan}. Instead it
  * demonstrates the part an external library can own: read public snapshot file-change metadata,
  * accept Puffin-backed deletion vectors on v3 tables, and surface row-shaped CDC events for added
- * rows and rows deleted by a deletion vector or removed data file. Equality deletes and non-DV
- * position deletes are rejected.
+ * rows and rows deleted by a deletion vector or removed data file. The planner can also collapse
+ * raw events into net changes by removing opposite INSERT/DELETE pairs for identical source rows.
+ * Equality deletes and non-DV position deletes are rejected.
  */
 public class DeletionVectorChangelogExample {
 
@@ -66,6 +70,7 @@ public class DeletionVectorChangelogExample {
   private static final Schema ROW_LOCATION_METADATA_SCHEMA =
       new Schema(MetadataColumns.FILE_PATH, MetadataColumns.ROW_POSITION);
   private static final long UPDATED_CUSTOMER_ID = 2L;
+  private static final long TRANSIENT_CUSTOMER_ID = 5L;
   private static final String UNSUPPORTED_DELETE_MESSAGE =
       "Only deletion vectors in v3 tables are supported by this changelog planner";
 
@@ -82,6 +87,14 @@ public class DeletionVectorChangelogExample {
           result.fromSnapshotId(),
           result.toSnapshotId());
       for (ChangelogEvent event : result.events()) {
+        LOG.info("  {}", event);
+      }
+
+      LOG.info(
+          "Net changes from snapshot {} to {}:",
+          result.fromSnapshotId(),
+          result.toSnapshotId());
+      for (ChangelogEvent event : result.netChangeEvents()) {
         LOG.info("  {}", event);
       }
 
@@ -154,18 +167,31 @@ public class DeletionVectorChangelogExample {
                   new Customer(3L, "Carol Lee", "bronze")),
               "dv-changelog-add",
               3L);
+      DataFile transientDataFile =
+          writeDataFile(
+              table,
+              List.of(new Customer(TRANSIENT_CUSTOMER_ID, "Eve Stone", "trial")),
+              "dv-changelog-transient",
+              5L);
 
-      table.newRowDelta().addDeletes(deletionVectorFile).addRows(upsertDataFile).commit();
+      table
+          .newRowDelta()
+          .addDeletes(deletionVectorFile)
+          .addRows(upsertDataFile)
+          .addRows(transientDataFile)
+          .commit();
       table.refresh();
 
-      table.newDelete().deleteFile(removableDataFile).commit();
+      table.newDelete().deleteFile(removableDataFile).deleteFile(transientDataFile).commit();
       table.refresh();
       long toSnapshotId = table.currentSnapshot().snapshotId();
 
       DvOnlyChangelogPlanner planner = new DvOnlyChangelogPlanner();
+      List<ChangelogEvent> events = planner.plan(table, fromSnapshotId, toSnapshotId);
       return new ChangelogResult(
           planner.changelogSchema(table),
-          planner.plan(table, fromSnapshotId, toSnapshotId),
+          events,
+          planner.netChanges(events),
           readVisibleRows(table),
           fromSnapshotId,
           toSnapshotId,
@@ -334,6 +360,7 @@ public class DeletionVectorChangelogExample {
   public record ChangelogResult(
       Schema changelogSchema,
       List<ChangelogEvent> events,
+      List<ChangelogEvent> netChangeEvents,
       List<Record> visibleRows,
       long fromSnapshotId,
       long toSnapshotId,
@@ -350,7 +377,18 @@ public class DeletionVectorChangelogExample {
       int _change_ordinal,
       long _commit_snapshot_id) {}
 
+  private record SourceRowKey(long customerId, String name, String loyaltyTier) {}
+
   public static class DvOnlyChangelogPlanner {
+
+    private static final Comparator<String> NULL_SAFE_STRING_ORDER =
+        Comparator.nullsFirst(String::compareTo);
+    private static final Comparator<ChangelogEvent> EVENT_ORDER =
+        Comparator.comparingInt(ChangelogEvent::_change_ordinal)
+            .thenComparingLong(ChangelogEvent::customer_id)
+            .thenComparingInt(event -> event._change_type().ordinal())
+            .thenComparing(ChangelogEvent::name, NULL_SAFE_STRING_ORDER)
+            .thenComparing(ChangelogEvent::loyalty_tier, NULL_SAFE_STRING_ORDER);
 
     public Schema changelogSchema(Table table) {
       return ChangelogUtil.changelogSchema(table.schema());
@@ -379,12 +417,39 @@ public class DeletionVectorChangelogExample {
         changeOrdinal++;
       }
 
-      events.sort(
-          Comparator.comparingInt(ChangelogEvent::_change_ordinal)
-              .thenComparingLong(ChangelogEvent::customer_id)
-              .thenComparing(event -> event._change_type().ordinal())
-              .thenComparing(ChangelogEvent::name));
+      events.sort(EVENT_ORDER);
       return Collections.unmodifiableList(events);
+    }
+
+    public List<ChangelogEvent> planNetChanges(
+        Table table, long fromSnapshotExclusive, long toSnapshotInclusive)
+        throws IOException {
+      return netChanges(plan(table, fromSnapshotExclusive, toSnapshotInclusive));
+    }
+
+    public List<ChangelogEvent> netChanges(List<ChangelogEvent> events) {
+      Map<SourceRowKey, Deque<ChangelogEvent>> netEventsByRow = new LinkedHashMap<>();
+      List<ChangelogEvent> orderedEvents = new ArrayList<>(events);
+      orderedEvents.sort(EVENT_ORDER);
+
+      for (ChangelogEvent event : orderedEvents) {
+        Deque<ChangelogEvent> rowEvents =
+            netEventsByRow.computeIfAbsent(sourceRowKey(event), ignored -> new ArrayDeque<>());
+
+        if (!rowEvents.isEmpty() && oppositeChanges(rowEvents.peekLast(), event)) {
+          rowEvents.removeLast();
+        } else {
+          rowEvents.addLast(event);
+        }
+      }
+
+      List<ChangelogEvent> netEvents = new ArrayList<>();
+      for (Deque<ChangelogEvent> rowEvents : netEventsByRow.values()) {
+        netEvents.addAll(rowEvents);
+      }
+
+      netEvents.sort(EVENT_ORDER);
+      return Collections.unmodifiableList(netEvents);
     }
 
     static boolean shouldPlanSnapshotOperation(String operation) {
@@ -511,6 +576,22 @@ public class DeletionVectorChangelogExample {
           operation,
           changeOrdinal,
           snapshot.snapshotId());
+    }
+
+    private SourceRowKey sourceRowKey(ChangelogEvent event) {
+      return new SourceRowKey(event.customer_id(), event.name(), event.loyalty_tier());
+    }
+
+    private boolean oppositeChanges(ChangelogEvent previous, ChangelogEvent current) {
+      return isInsert(previous) && isDelete(current) || isDelete(previous) && isInsert(current);
+    }
+
+    private boolean isInsert(ChangelogEvent event) {
+      return event._change_type() == ChangelogOperation.INSERT;
+    }
+
+    private boolean isDelete(ChangelogEvent event) {
+      return event._change_type() == ChangelogOperation.DELETE;
     }
 
     private PositionDeleteIndex deletionVectorIndex(Table table, DeleteFile deleteFile)
