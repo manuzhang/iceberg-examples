@@ -8,6 +8,8 @@ import static org.junit.Assert.fail;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import org.apache.iceberg.DataFile;
+import org.apache.iceberg.DataFiles;
 import org.apache.iceberg.DataOperations;
 import org.apache.iceberg.DeleteFile;
 import org.apache.iceberg.FileFormat;
@@ -29,11 +31,10 @@ public class DeletionVectorChangelogExampleTest {
           example.demonstrateDeletionVectorChangelog(warehouseDir);
 
       List<DeletionVectorChangelogExample.ChangelogEvent> events = result.events();
-      assertEquals(2, events.size());
+      assertEquals(3, events.size());
 
       DeletionVectorChangelogExample.ChangelogEvent addedRows = events.get(0);
       assertEquals(DeletionVectorChangelogExample.ChangelogEventType.ADDED_ROWS, addedRows.type());
-      assertEquals(result.toSnapshotId(), addedRows.snapshotId());
       assertEquals(result.upsertDataFile().location(), addedRows.dataFileLocation());
       assertEquals(2L, addedRows.recordCount());
 
@@ -41,13 +42,21 @@ public class DeletionVectorChangelogExampleTest {
       assertEquals(
           DeletionVectorChangelogExample.ChangelogEventType.DELETED_ROWS_BY_DV,
           deletedRows.type());
-      assertEquals(result.toSnapshotId(), deletedRows.snapshotId());
+      assertEquals(addedRows.snapshotId(), deletedRows.snapshotId());
       assertEquals(result.originalDataFile().location(), deletedRows.dataFileLocation());
       assertEquals(result.deletionVectorFile().location(), deletedRows.deletionVectorLocation());
       assertEquals(result.deletionVectorFile().contentOffset(), deletedRows.deletionVectorOffset());
       assertEquals(
           result.deletionVectorFile().contentSizeInBytes(), deletedRows.deletionVectorSize());
       assertEquals(1L, deletedRows.recordCount());
+
+      DeletionVectorChangelogExample.ChangelogEvent removedDataFile = events.get(2);
+      assertEquals(
+          DeletionVectorChangelogExample.ChangelogEventType.DELETED_ROWS_BY_REMOVED_DATA_FILE,
+          removedDataFile.type());
+      assertEquals(result.toSnapshotId(), removedDataFile.snapshotId());
+      assertEquals(result.removedDataFile().location(), removedDataFile.dataFileLocation());
+      assertEquals(1L, removedDataFile.recordCount());
 
       List<Record> rows = result.visibleRows();
       assertEquals(3, rows.size());
@@ -73,6 +82,42 @@ public class DeletionVectorChangelogExampleTest {
     assertTrue(
         DeletionVectorChangelogExample.DvOnlyChangelogPlanner.shouldPlanSnapshotOperation(
             DataOperations.APPEND));
+  }
+
+  @Test
+  public void testRemovedDataFileEventCarriesRemovedDeletionVector() {
+    DataFile dataFile =
+        DataFiles.builder(PartitionSpec.unpartitioned())
+            .withPath("in-memory://warehouse/data-file.avro")
+            .withFormat(FileFormat.AVRO)
+            .withRecordCount(3)
+            .withFileSizeInBytes(100)
+            .build();
+    DeleteFile deletionVector =
+        FileMetadata.deleteFileBuilder(PartitionSpec.unpartitioned())
+            .ofPositionDeletes()
+            .withPath("in-memory://warehouse/data-file-dv.puffin")
+            .withFormat(FileFormat.PUFFIN)
+            .withRecordCount(1)
+            .withFileSizeInBytes(50)
+            .withReferencedDataFile(dataFile.location())
+            .withContentOffset(10)
+            .withContentSizeInBytes(20)
+            .build();
+
+    DeletionVectorChangelogExample.ChangelogEvent event =
+        DeletionVectorChangelogExample.DvOnlyChangelogPlanner.removedDataFileEvent(
+            12L, dataFile, deletionVector);
+
+    assertEquals(
+        DeletionVectorChangelogExample.ChangelogEventType.DELETED_ROWS_BY_REMOVED_DATA_FILE,
+        event.type());
+    assertEquals(12L, event.snapshotId());
+    assertEquals(dataFile.location(), event.dataFileLocation());
+    assertEquals(2L, event.recordCount());
+    assertEquals(deletionVector.location(), event.deletionVectorLocation());
+    assertEquals(deletionVector.contentOffset(), event.deletionVectorOffset());
+    assertEquals(deletionVector.contentSizeInBytes(), event.deletionVectorSize());
   }
 
   private static void assertUnsupported(DeleteFile deleteFile) {

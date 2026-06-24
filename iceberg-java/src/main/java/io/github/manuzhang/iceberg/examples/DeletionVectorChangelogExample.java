@@ -6,6 +6,7 @@ import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.apache.iceberg.CatalogProperties;
@@ -46,7 +47,8 @@ import org.slf4j.LoggerFactory;
  * <p>This intentionally does not plug into Iceberg's {@code IncrementalChangelogScan}. Instead it
  * demonstrates the part an external library can own: read public snapshot file-change metadata,
  * accept Puffin-backed deletion vectors on v3 tables, and surface metadata events for added rows
- * and rows deleted by a deletion vector. Equality deletes and non-DV position deletes are rejected.
+ * rows deleted by a deletion vector or removed data file. Equality deletes and non-DV position
+ * deletes are rejected.
  */
 public class DeletionVectorChangelogExample {
 
@@ -76,7 +78,7 @@ public class DeletionVectorChangelogExample {
         LOG.info("  {}", event);
       }
 
-      LOG.info("Visible rows after applying the DV-backed upsert:");
+      LOG.info("Visible rows after applying the DV-backed upsert and removed data file:");
       for (Record row : result.visibleRows()) {
         LOG.info(
             "  customer_id={}, name={}, loyalty_tier={}",
@@ -114,7 +116,13 @@ public class DeletionVectorChangelogExample {
                   new Customer(1L, "Alice Johnson", "silver")),
               "initial-load",
               1L);
-      table.newAppend().appendFile(initialDataFile).commit();
+      DataFile removableDataFile =
+          writeDataFile(
+              table,
+              List.of(new Customer(4L, "Dave Kim", "silver")),
+              "initial-removable",
+              4L);
+      table.newAppend().appendFile(initialDataFile).appendFile(removableDataFile).commit();
       table.refresh();
       long fromSnapshotId = table.currentSnapshot().snapshotId();
 
@@ -142,6 +150,9 @@ public class DeletionVectorChangelogExample {
 
       table.newRowDelta().addDeletes(deletionVectorFile).addRows(upsertDataFile).commit();
       table.refresh();
+
+      table.newDelete().deleteFile(removableDataFile).commit();
+      table.refresh();
       long toSnapshotId = table.currentSnapshot().snapshotId();
 
       DvOnlyChangelogPlanner planner = new DvOnlyChangelogPlanner();
@@ -152,6 +163,7 @@ public class DeletionVectorChangelogExample {
           toSnapshotId,
           initialDataFile,
           upsertDataFile,
+          removableDataFile,
           deletionVectorFile);
     }
   }
@@ -311,11 +323,13 @@ public class DeletionVectorChangelogExample {
       long toSnapshotId,
       DataFile originalDataFile,
       DataFile upsertDataFile,
+      DataFile removedDataFile,
       DeleteFile deletionVectorFile) {}
 
   public enum ChangelogEventType {
     ADDED_ROWS,
-    DELETED_ROWS_BY_DV
+    DELETED_ROWS_BY_DV,
+    DELETED_ROWS_BY_REMOVED_DATA_FILE
   }
 
   public record ChangelogEvent(
@@ -345,6 +359,7 @@ public class DeletionVectorChangelogExample {
 
         events.addAll(addedRows(table, snapshot));
         events.addAll(addedDeletionVectors(table, snapshot));
+        events.addAll(removedDataFiles(table, snapshot));
       }
 
       events.sort(
@@ -407,6 +422,69 @@ public class DeletionVectorChangelogExample {
       }
 
       return events;
+    }
+
+    private List<ChangelogEvent> removedDataFiles(Table table, Snapshot snapshot) {
+      List<ChangelogEvent> events = new ArrayList<>();
+      Map<String, DeleteFile> removedDvsByDataFile =
+          removedDeletionVectorsByDataFile(table, snapshot);
+
+      for (DataFile dataFile : snapshot.removedDataFiles(table.io())) {
+        events.add(
+            removedDataFileEvent(
+                snapshot.snapshotId(), dataFile, removedDvsByDataFile.get(dataFile.location())));
+      }
+
+      return events;
+    }
+
+    static ChangelogEvent removedDataFileEvent(
+        long snapshotId, DataFile dataFile, DeleteFile removedDeletionVector) {
+      long recordCount = dataFile.recordCount();
+      String deletionVectorLocation = null;
+      Long deletionVectorOffset = null;
+      Long deletionVectorSize = null;
+
+      if (removedDeletionVector != null) {
+        requireSupportedDeleteFile(removedDeletionVector);
+        recordCount -= removedDeletionVector.recordCount();
+        if (recordCount < 0) {
+          throw new IllegalStateException(
+              "Deletion vector row count exceeds removed data file row count: "
+                  + dataFile.location());
+        }
+
+        deletionVectorLocation = removedDeletionVector.location();
+        deletionVectorOffset = removedDeletionVector.contentOffset();
+        deletionVectorSize = removedDeletionVector.contentSizeInBytes();
+      }
+
+      return new ChangelogEvent(
+          ChangelogEventType.DELETED_ROWS_BY_REMOVED_DATA_FILE,
+          snapshotId,
+          dataFile.location(),
+          recordCount,
+          deletionVectorLocation,
+          deletionVectorOffset,
+          deletionVectorSize);
+    }
+
+    private Map<String, DeleteFile> removedDeletionVectorsByDataFile(
+        Table table, Snapshot snapshot) {
+      Map<String, DeleteFile> removedDvsByDataFile = new HashMap<>();
+
+      for (DeleteFile deleteFile : snapshot.removedDeleteFiles(table.io())) {
+        requireSupportedDeleteFile(deleteFile);
+        DeleteFile previous =
+            removedDvsByDataFile.put(deleteFile.referencedDataFile(), deleteFile);
+        if (previous != null) {
+          throw new UnsupportedOperationException(
+              "Only one deletion vector per removed data file is supported by this changelog"
+                  + " planner");
+        }
+      }
+
+      return removedDvsByDataFile;
     }
 
     private List<Snapshot> snapshotsBetween(
