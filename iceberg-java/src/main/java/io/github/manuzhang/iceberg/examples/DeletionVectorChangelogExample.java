@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import org.apache.iceberg.CatalogProperties;
 import org.apache.iceberg.DataFile;
+import org.apache.iceberg.DataOperations;
 import org.apache.iceberg.DeleteFile;
 import org.apache.iceberg.FileContent;
 import org.apache.iceberg.FileFormat;
@@ -338,6 +339,10 @@ public class DeletionVectorChangelogExample {
       List<ChangelogEvent> events = new ArrayList<>();
       for (Snapshot snapshot :
           snapshotsBetween(table, fromSnapshotExclusive, toSnapshotInclusive)) {
+        if (!shouldPlanSnapshotOperation(snapshot.operation())) {
+          continue;
+        }
+
         events.addAll(addedRows(table, snapshot));
         events.addAll(addedDeletionVectors(table, snapshot));
       }
@@ -347,6 +352,10 @@ public class DeletionVectorChangelogExample {
               .thenComparing(event -> event.type().ordinal())
               .thenComparing(ChangelogEvent::dataFileLocation));
       return Collections.unmodifiableList(events);
+    }
+
+    static boolean shouldPlanSnapshotOperation(String operation) {
+      return !DataOperations.REPLACE.equals(operation);
     }
 
     static void requireSupportedDeleteFile(DeleteFile deleteFile) {

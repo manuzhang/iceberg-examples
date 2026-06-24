@@ -1,12 +1,14 @@
 package io.github.manuzhang.iceberg.examples;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import org.apache.iceberg.DataOperations;
 import org.apache.iceberg.DeleteFile;
 import org.apache.iceberg.FileFormat;
 import org.apache.iceberg.FileMetadata;
@@ -61,6 +63,16 @@ public class DeletionVectorChangelogExampleTest {
   public void testRejectsEqualityAndNonDvPositionDeletes() {
     assertUnsupported(equalityDeleteFile());
     assertUnsupported(positionDeleteFile());
+  }
+
+  @Test
+  public void testSkipsReplaceOperations() {
+    assertFalse(
+        DeletionVectorChangelogExample.DvOnlyChangelogPlanner.shouldPlanSnapshotOperation(
+            DataOperations.REPLACE));
+    assertTrue(
+        DeletionVectorChangelogExample.DvOnlyChangelogPlanner.shouldPlanSnapshotOperation(
+            DataOperations.APPEND));
   }
 
   private static void assertUnsupported(DeleteFile deleteFile) {
