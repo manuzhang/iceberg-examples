@@ -1,15 +1,16 @@
 package io.github.manuzhang.iceberg.examples;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.apache.iceberg.CatalogProperties;
+import org.apache.iceberg.ChangelogUtil;
 import org.apache.iceberg.ChangelogOperation;
 import org.apache.iceberg.DataFile;
 import org.apache.iceberg.DataOperations;
@@ -30,6 +31,7 @@ import org.apache.iceberg.data.GenericRecord;
 import org.apache.iceberg.data.IcebergGenerics;
 import org.apache.iceberg.data.Record;
 import org.apache.iceberg.deletes.PositionDelete;
+import org.apache.iceberg.deletes.PositionDeleteIndex;
 import org.apache.iceberg.exceptions.AlreadyExistsException;
 import org.apache.iceberg.expressions.Expressions;
 import org.apache.iceberg.io.CloseableIterable;
@@ -37,19 +39,21 @@ import org.apache.iceberg.io.DataWriter;
 import org.apache.iceberg.io.DeleteWriteResult;
 import org.apache.iceberg.io.OutputFileFactory;
 import org.apache.iceberg.io.PartitioningDVWriter;
+import org.apache.iceberg.io.SeekableInputStream;
 import org.apache.iceberg.rest.EmbeddedRestCatalogServer;
 import org.apache.iceberg.rest.RESTCatalog;
+import org.apache.iceberg.types.TypeUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 /**
- * Example of a third-party, metadata-level changelog planner for Iceberg v3 deletion vectors.
+ * Example of a third-party changelog planner for Iceberg v3 deletion vectors.
  *
  * <p>This intentionally does not plug into Iceberg's {@code IncrementalChangelogScan}. Instead it
  * demonstrates the part an external library can own: read public snapshot file-change metadata,
- * accept Puffin-backed deletion vectors on v3 tables, and surface metadata events for added rows
- * rows deleted by a deletion vector or removed data file. Equality deletes and non-DV position
- * deletes are rejected.
+ * accept Puffin-backed deletion vectors on v3 tables, and surface row-shaped CDC events for added
+ * rows and rows deleted by a deletion vector or removed data file. Equality deletes and non-DV
+ * position deletes are rejected.
  */
 public class DeletionVectorChangelogExample {
 
@@ -59,6 +63,8 @@ public class DeletionVectorChangelogExample {
   private static final FileFormat DATA_FILE_FORMAT = FileFormat.AVRO;
   private static final TableIdentifier TABLE_IDENTIFIER =
       TableIdentifier.parse("default.dv_changelog_customers");
+  private static final Schema ROW_LOCATION_METADATA_SCHEMA =
+      new Schema(MetadataColumns.FILE_PATH, MetadataColumns.ROW_POSITION);
   private static final long UPDATED_CUSTOMER_ID = 2L;
   private static final String UNSUPPORTED_DELETE_MESSAGE =
       "Only deletion vectors in v3 tables are supported by this changelog planner";
@@ -158,6 +164,7 @@ public class DeletionVectorChangelogExample {
 
       DvOnlyChangelogPlanner planner = new DvOnlyChangelogPlanner();
       return new ChangelogResult(
+          planner.changelogSchema(table),
           planner.plan(table, fromSnapshotId, toSnapshotId),
           readVisibleRows(table),
           fromSnapshotId,
@@ -301,6 +308,10 @@ public class DeletionVectorChangelogExample {
         CatalogProperties.WAREHOUSE_LOCATION, warehousePath);
   }
 
+  private static Schema rowReadSchema(Table table) {
+    return TypeUtil.join(table.schema(), ROW_LOCATION_METADATA_SCHEMA);
+  }
+
   private static String localCatalogUri() {
     return "http://localhost:0";
   }
@@ -317,7 +328,11 @@ public class DeletionVectorChangelogExample {
 
   private record ExistingCustomerRow(long customerId, String filePath, long rowPosition) {}
 
+  private record PositionedCustomerRow(
+      long customerId, String name, String loyaltyTier, long rowPosition) {}
+
   public record ChangelogResult(
+      Schema changelogSchema,
       List<ChangelogEvent> events,
       List<Record> visibleRows,
       long fromSnapshotId,
@@ -328,16 +343,18 @@ public class DeletionVectorChangelogExample {
       DeleteFile deletionVectorFile) {}
 
   public record ChangelogEvent(
-      ChangelogOperation changeType,
-      int changeOrdinal,
-      long commitSnapshotId,
-      String dataFileLocation,
-      long recordCount,
-      String deletionVectorLocation,
-      Long deletionVectorOffset,
-      Long deletionVectorSize) {}
+      long customer_id,
+      String name,
+      String loyalty_tier,
+      ChangelogOperation _change_type,
+      int _change_ordinal,
+      long _commit_snapshot_id) {}
 
   public static class DvOnlyChangelogPlanner {
+
+    public Schema changelogSchema(Table table) {
+      return ChangelogUtil.changelogSchema(table.schema());
+    }
 
     public List<ChangelogEvent> plan(
         Table table, long fromSnapshotExclusive, long toSnapshotInclusive)
@@ -363,9 +380,10 @@ public class DeletionVectorChangelogExample {
       }
 
       events.sort(
-          Comparator.comparingInt(ChangelogEvent::changeOrdinal)
-              .thenComparing(event -> event.changeType().ordinal())
-              .thenComparing(ChangelogEvent::dataFileLocation));
+          Comparator.comparingInt(ChangelogEvent::_change_ordinal)
+              .thenComparingLong(ChangelogEvent::customer_id)
+              .thenComparing(event -> event._change_type().ordinal())
+              .thenComparing(ChangelogEvent::name));
       return Collections.unmodifiableList(events);
     }
 
@@ -388,115 +406,132 @@ public class DeletionVectorChangelogExample {
     }
 
     private List<ChangelogEvent> addedRows(
-        Table table, Snapshot snapshot, int changeOrdinal) {
+        Table table, Snapshot snapshot, int changeOrdinal) throws IOException {
       List<ChangelogEvent> events = new ArrayList<>();
 
       for (DataFile dataFile : snapshot.addedDataFiles(table.io())) {
-        events.add(
-            new ChangelogEvent(
-                ChangelogOperation.INSERT,
-                changeOrdinal,
-                snapshot.snapshotId(),
-                dataFile.location(),
-                dataFile.recordCount(),
-                null,
-                null,
-                null));
+        for (PositionedCustomerRow row :
+            rowsFromDataFile(table, snapshot.snapshotId(), dataFile.location())) {
+          events.add(toChangelogEvent(row, ChangelogOperation.INSERT, changeOrdinal, snapshot));
+        }
       }
 
       return events;
     }
 
     private List<ChangelogEvent> addedDeletionVectors(
-        Table table, Snapshot snapshot, int changeOrdinal) {
+        Table table, Snapshot snapshot, int changeOrdinal) throws IOException {
       List<ChangelogEvent> events = new ArrayList<>();
+      Long parentSnapshotId = snapshot.parentId();
+      if (parentSnapshotId == null) {
+        throw new IllegalStateException(
+            "Cannot plan deleted rows without a parent snapshot: " + snapshot.snapshotId());
+      }
 
       for (DeleteFile deleteFile : snapshot.addedDeleteFiles(table.io())) {
         requireSupportedDeleteFile(deleteFile);
-        events.add(
-            new ChangelogEvent(
-                ChangelogOperation.DELETE,
-                changeOrdinal,
-                snapshot.snapshotId(),
-                deleteFile.referencedDataFile(),
-                deleteFile.recordCount(),
-                deleteFile.location(),
-                deleteFile.contentOffset(),
-                deleteFile.contentSizeInBytes()));
+        PositionDeleteIndex deletedPositions = deletionVectorIndex(table, deleteFile);
+        for (PositionedCustomerRow row :
+            rowsFromDataFile(table, parentSnapshotId, deleteFile.referencedDataFile())) {
+          if (deletedPositions.isDeleted(row.rowPosition())) {
+            events.add(toChangelogEvent(row, ChangelogOperation.DELETE, changeOrdinal, snapshot));
+          }
+        }
       }
 
       return events;
     }
 
     private List<ChangelogEvent> removedDataFiles(
-        Table table, Snapshot snapshot, int changeOrdinal) {
+        Table table, Snapshot snapshot, int changeOrdinal) throws IOException {
       List<ChangelogEvent> events = new ArrayList<>();
-      Map<String, DeleteFile> removedDvsByDataFile =
-          removedDeletionVectorsByDataFile(table, snapshot);
+      requireSupportedRemovedDeleteFiles(table, snapshot);
+      Long parentSnapshotId = snapshot.parentId();
+      if (parentSnapshotId == null) {
+        throw new IllegalStateException(
+            "Cannot plan removed data file rows without a parent snapshot: "
+                + snapshot.snapshotId());
+      }
 
       for (DataFile dataFile : snapshot.removedDataFiles(table.io())) {
-        events.add(
-            removedDataFileEvent(
-                changeOrdinal,
-                snapshot.snapshotId(),
-                dataFile,
-                removedDvsByDataFile.get(dataFile.location())));
+        for (PositionedCustomerRow row :
+            rowsFromDataFile(table, parentSnapshotId, dataFile.location())) {
+          events.add(toChangelogEvent(row, ChangelogOperation.DELETE, changeOrdinal, snapshot));
+        }
       }
 
       return events;
     }
 
-    static ChangelogEvent removedDataFileEvent(
-        int changeOrdinal,
-        long commitSnapshotId,
-        DataFile dataFile,
-        DeleteFile removedDeletionVector) {
-      long recordCount = dataFile.recordCount();
-      String deletionVectorLocation = null;
-      Long deletionVectorOffset = null;
-      Long deletionVectorSize = null;
-
-      if (removedDeletionVector != null) {
-        requireSupportedDeleteFile(removedDeletionVector);
-        recordCount -= removedDeletionVector.recordCount();
-        if (recordCount < 0) {
-          throw new IllegalStateException(
-              "Deletion vector row count exceeds removed data file row count: "
-                  + dataFile.location());
-        }
-
-        deletionVectorLocation = removedDeletionVector.location();
-        deletionVectorOffset = removedDeletionVector.contentOffset();
-        deletionVectorSize = removedDeletionVector.contentSizeInBytes();
-      }
-
-      return new ChangelogEvent(
-          ChangelogOperation.DELETE,
-          changeOrdinal,
-          commitSnapshotId,
-          dataFile.location(),
-          recordCount,
-          deletionVectorLocation,
-          deletionVectorOffset,
-          deletionVectorSize);
-    }
-
-    private Map<String, DeleteFile> removedDeletionVectorsByDataFile(
-        Table table, Snapshot snapshot) {
-      Map<String, DeleteFile> removedDvsByDataFile = new HashMap<>();
-
+    private void requireSupportedRemovedDeleteFiles(Table table, Snapshot snapshot) {
       for (DeleteFile deleteFile : snapshot.removedDeleteFiles(table.io())) {
         requireSupportedDeleteFile(deleteFile);
-        DeleteFile previous =
-            removedDvsByDataFile.put(deleteFile.referencedDataFile(), deleteFile);
-        if (previous != null) {
-          throw new UnsupportedOperationException(
-              "Only one deletion vector per removed data file is supported by this changelog"
-                  + " planner");
+      }
+    }
+
+    private List<PositionedCustomerRow> rowsFromDataFile(
+        Table table, long snapshotId, String dataFileLocation) throws IOException {
+      List<PositionedCustomerRow> rows = new ArrayList<>();
+
+      try (CloseableIterable<Record> iterable =
+          IcebergGenerics.read(table)
+              .useSnapshot(snapshotId)
+              .project(rowReadSchema(table))
+              .build()) {
+        for (Record row : iterable) {
+          if (dataFileLocation.equals(row.getField(MetadataColumns.FILE_PATH.name()).toString())) {
+            rows.add(
+                new PositionedCustomerRow(
+                    ((Number) row.getField("customer_id")).longValue(),
+                    stringField(row, "name"),
+                    stringField(row, "loyalty_tier"),
+                    ((Number) row.getField(MetadataColumns.ROW_POSITION.name())).longValue()));
+          }
         }
       }
 
-      return removedDvsByDataFile;
+      rows.sort(Comparator.comparingLong(PositionedCustomerRow::rowPosition));
+      return rows;
+    }
+
+    private String stringField(Record row, String fieldName) {
+      Object value = row.getField(fieldName);
+      return value != null ? value.toString() : null;
+    }
+
+    private ChangelogEvent toChangelogEvent(
+        PositionedCustomerRow row,
+        ChangelogOperation operation,
+        int changeOrdinal,
+        Snapshot snapshot) {
+      return new ChangelogEvent(
+          row.customerId(),
+          row.name(),
+          row.loyaltyTier(),
+          operation,
+          changeOrdinal,
+          snapshot.snapshotId());
+    }
+
+    private PositionDeleteIndex deletionVectorIndex(Table table, DeleteFile deleteFile)
+        throws IOException {
+      byte[] bytes = new byte[Math.toIntExact(deleteFile.contentSizeInBytes())];
+
+      try (SeekableInputStream input =
+          table.io().newInputFile(deleteFile.location()).newStream()) {
+        input.seek(deleteFile.contentOffset());
+        int bytesRead = 0;
+        while (bytesRead < bytes.length) {
+          int read = input.read(bytes, bytesRead, bytes.length - bytesRead);
+          if (read < 0) {
+            throw new EOFException("Could not read deletion vector: " + deleteFile.location());
+          }
+
+          bytesRead += read;
+        }
+      }
+
+      return PositionDeleteIndex.deserialize(bytes, deleteFile);
     }
 
     private List<Snapshot> snapshotsBetween(

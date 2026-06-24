@@ -140,10 +140,9 @@ bazel test --config=jdk21 //iceberg-java:all
 
 - Demonstrating the boundary for a third-party changelog planner
 - Reading snapshot file-change metadata through Iceberg's public APIs
-- Following Iceberg's CDC metadata shape: `_change_type`, `_change_ordinal`, and
-  `_commit_snapshot_id`
-- Emitting metadata events for added data files, rows deleted by Puffin deletion vectors, and
-  removed data files
+- Emitting the full source row schema followed by Iceberg's CDC metadata columns:
+  `_change_type`, `_change_ordinal`, and `_commit_snapshot_id`
+- Handling rows from added data files, Puffin deletion vectors, and removed data files
 - Rejecting equality deletes and non-DV position deletes
 - Verifying the planned changelog against a v3 DV-backed row-level upsert
 

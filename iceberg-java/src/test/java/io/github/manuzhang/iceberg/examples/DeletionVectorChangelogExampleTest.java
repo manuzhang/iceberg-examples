@@ -9,14 +9,15 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import org.apache.iceberg.ChangelogOperation;
-import org.apache.iceberg.DataFile;
-import org.apache.iceberg.DataFiles;
 import org.apache.iceberg.DataOperations;
 import org.apache.iceberg.DeleteFile;
 import org.apache.iceberg.FileFormat;
 import org.apache.iceberg.FileMetadata;
+import org.apache.iceberg.MetadataColumns;
 import org.apache.iceberg.PartitionSpec;
+import org.apache.iceberg.Schema;
 import org.apache.iceberg.data.Record;
+import org.apache.iceberg.types.Types;
 import org.junit.Test;
 
 /** Unit tests for the deletion-vector-only changelog planner example. */
@@ -32,31 +33,48 @@ public class DeletionVectorChangelogExampleTest {
           example.demonstrateDeletionVectorChangelog(warehouseDir);
 
       List<DeletionVectorChangelogExample.ChangelogEvent> events = result.events();
-      assertEquals(3, events.size());
+      assertChangelogSchema(result.changelogSchema());
+      assertEquals(4, events.size());
 
       DeletionVectorChangelogExample.ChangelogEvent addedRows = events.get(0);
-      assertEquals(ChangelogOperation.INSERT, addedRows.changeType());
-      assertEquals(0, addedRows.changeOrdinal());
-      assertEquals(result.upsertDataFile().location(), addedRows.dataFileLocation());
-      assertEquals(2L, addedRows.recordCount());
+      assertEvent(
+          addedRows,
+          2L,
+          "Bob Smith",
+          "gold",
+          ChangelogOperation.INSERT,
+          0,
+          addedRows._commit_snapshot_id());
 
       DeletionVectorChangelogExample.ChangelogEvent deletedRows = events.get(1);
-      assertEquals(ChangelogOperation.DELETE, deletedRows.changeType());
-      assertEquals(addedRows.changeOrdinal(), deletedRows.changeOrdinal());
-      assertEquals(addedRows.commitSnapshotId(), deletedRows.commitSnapshotId());
-      assertEquals(result.originalDataFile().location(), deletedRows.dataFileLocation());
-      assertEquals(result.deletionVectorFile().location(), deletedRows.deletionVectorLocation());
-      assertEquals(result.deletionVectorFile().contentOffset(), deletedRows.deletionVectorOffset());
-      assertEquals(
-          result.deletionVectorFile().contentSizeInBytes(), deletedRows.deletionVectorSize());
-      assertEquals(1L, deletedRows.recordCount());
+      assertEvent(
+          deletedRows,
+          2L,
+          "Bob Smith",
+          "bronze",
+          ChangelogOperation.DELETE,
+          0,
+          addedRows._commit_snapshot_id());
 
-      DeletionVectorChangelogExample.ChangelogEvent removedDataFile = events.get(2);
-      assertEquals(ChangelogOperation.DELETE, removedDataFile.changeType());
-      assertEquals(1, removedDataFile.changeOrdinal());
-      assertEquals(result.toSnapshotId(), removedDataFile.commitSnapshotId());
-      assertEquals(result.removedDataFile().location(), removedDataFile.dataFileLocation());
-      assertEquals(1L, removedDataFile.recordCount());
+      DeletionVectorChangelogExample.ChangelogEvent addedCarol = events.get(2);
+      assertEvent(
+          addedCarol,
+          3L,
+          "Carol Lee",
+          "bronze",
+          ChangelogOperation.INSERT,
+          0,
+          addedRows._commit_snapshot_id());
+
+      DeletionVectorChangelogExample.ChangelogEvent removedDataFile = events.get(3);
+      assertEvent(
+          removedDataFile,
+          4L,
+          "Dave Kim",
+          "silver",
+          ChangelogOperation.DELETE,
+          1,
+          result.toSnapshotId());
 
       List<Record> rows = result.visibleRows();
       assertEquals(3, rows.size());
@@ -82,41 +100,6 @@ public class DeletionVectorChangelogExampleTest {
     assertTrue(
         DeletionVectorChangelogExample.DvOnlyChangelogPlanner.shouldPlanSnapshotOperation(
             DataOperations.APPEND));
-  }
-
-  @Test
-  public void testRemovedDataFileEventCarriesRemovedDeletionVector() {
-    DataFile dataFile =
-        DataFiles.builder(PartitionSpec.unpartitioned())
-            .withPath("in-memory://warehouse/data-file.avro")
-            .withFormat(FileFormat.AVRO)
-            .withRecordCount(3)
-            .withFileSizeInBytes(100)
-            .build();
-    DeleteFile deletionVector =
-        FileMetadata.deleteFileBuilder(PartitionSpec.unpartitioned())
-            .ofPositionDeletes()
-            .withPath("in-memory://warehouse/data-file-dv.puffin")
-            .withFormat(FileFormat.PUFFIN)
-            .withRecordCount(1)
-            .withFileSizeInBytes(50)
-            .withReferencedDataFile(dataFile.location())
-            .withContentOffset(10)
-            .withContentSizeInBytes(20)
-            .build();
-
-    DeletionVectorChangelogExample.ChangelogEvent event =
-        DeletionVectorChangelogExample.DvOnlyChangelogPlanner.removedDataFileEvent(
-            1, 12L, dataFile, deletionVector);
-
-    assertEquals(ChangelogOperation.DELETE, event.changeType());
-    assertEquals(1, event.changeOrdinal());
-    assertEquals(12L, event.commitSnapshotId());
-    assertEquals(dataFile.location(), event.dataFileLocation());
-    assertEquals(2L, event.recordCount());
-    assertEquals(deletionVector.location(), event.deletionVectorLocation());
-    assertEquals(deletionVector.contentOffset(), event.deletionVectorOffset());
-    assertEquals(deletionVector.contentSizeInBytes(), event.deletionVectorSize());
   }
 
   private static void assertUnsupported(DeleteFile deleteFile) {
@@ -152,5 +135,37 @@ public class DeletionVectorChangelogExampleTest {
     assertEquals(Long.valueOf(id), row.getField("customer_id"));
     assertEquals(name, row.getField("name"));
     assertEquals(loyaltyTier, row.getField("loyalty_tier"));
+  }
+
+  private static void assertChangelogSchema(Schema schema) {
+    List<Types.NestedField> columns = schema.columns();
+    assertEquals(6, columns.size());
+    assertEquals(RowLevelUpsertExample.CUSTOMER_SCHEMA.columns(), columns.subList(0, 3));
+    assertField(MetadataColumns.CHANGE_TYPE, columns.get(3));
+    assertField(MetadataColumns.CHANGE_ORDINAL, columns.get(4));
+    assertField(MetadataColumns.COMMIT_SNAPSHOT_ID, columns.get(5));
+  }
+
+  private static void assertField(Types.NestedField expected, Types.NestedField actual) {
+    assertEquals(expected.fieldId(), actual.fieldId());
+    assertEquals(expected.name(), actual.name());
+    assertEquals(expected.type(), actual.type());
+    assertEquals(expected.isOptional(), actual.isOptional());
+  }
+
+  private static void assertEvent(
+      DeletionVectorChangelogExample.ChangelogEvent event,
+      long id,
+      String name,
+      String loyaltyTier,
+      ChangelogOperation changeType,
+      int changeOrdinal,
+      long commitSnapshotId) {
+    assertEquals(id, event.customer_id());
+    assertEquals(name, event.name());
+    assertEquals(loyaltyTier, event.loyalty_tier());
+    assertEquals(changeType, event._change_type());
+    assertEquals(changeOrdinal, event._change_ordinal());
+    assertEquals(commitSnapshotId, event._commit_snapshot_id());
   }
 }
