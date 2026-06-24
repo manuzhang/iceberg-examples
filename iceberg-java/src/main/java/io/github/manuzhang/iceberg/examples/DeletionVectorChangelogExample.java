@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.apache.iceberg.CatalogProperties;
+import org.apache.iceberg.ChangelogOperation;
 import org.apache.iceberg.DataFile;
 import org.apache.iceberg.DataOperations;
 import org.apache.iceberg.DeleteFile;
@@ -326,14 +327,8 @@ public class DeletionVectorChangelogExample {
       DataFile removedDataFile,
       DeleteFile deletionVectorFile) {}
 
-  public enum ChangelogEventType {
-    ADDED_ROWS,
-    DELETED_ROWS_BY_DV,
-    DELETED_ROWS_BY_REMOVED_DATA_FILE
-  }
-
   public record ChangelogEvent(
-      ChangelogEventType type,
+      ChangelogOperation type,
       long snapshotId,
       String dataFileLocation,
       long recordCount,
@@ -393,7 +388,7 @@ public class DeletionVectorChangelogExample {
       for (DataFile dataFile : snapshot.addedDataFiles(table.io())) {
         events.add(
             new ChangelogEvent(
-                ChangelogEventType.ADDED_ROWS,
+                ChangelogOperation.INSERT,
                 snapshot.snapshotId(),
                 dataFile.location(),
                 dataFile.recordCount(),
@@ -412,7 +407,7 @@ public class DeletionVectorChangelogExample {
         requireSupportedDeleteFile(deleteFile);
         events.add(
             new ChangelogEvent(
-                ChangelogEventType.DELETED_ROWS_BY_DV,
+                ChangelogOperation.DELETE,
                 snapshot.snapshotId(),
                 deleteFile.referencedDataFile(),
                 deleteFile.recordCount(),
@@ -460,7 +455,7 @@ public class DeletionVectorChangelogExample {
       }
 
       return new ChangelogEvent(
-          ChangelogEventType.DELETED_ROWS_BY_REMOVED_DATA_FILE,
+          ChangelogOperation.DELETE,
           snapshotId,
           dataFile.location(),
           recordCount,

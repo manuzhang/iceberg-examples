@@ -8,6 +8,7 @@ import static org.junit.Assert.fail;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import org.apache.iceberg.ChangelogOperation;
 import org.apache.iceberg.DataFile;
 import org.apache.iceberg.DataFiles;
 import org.apache.iceberg.DataOperations;
@@ -34,14 +35,12 @@ public class DeletionVectorChangelogExampleTest {
       assertEquals(3, events.size());
 
       DeletionVectorChangelogExample.ChangelogEvent addedRows = events.get(0);
-      assertEquals(DeletionVectorChangelogExample.ChangelogEventType.ADDED_ROWS, addedRows.type());
+      assertEquals(ChangelogOperation.INSERT, addedRows.type());
       assertEquals(result.upsertDataFile().location(), addedRows.dataFileLocation());
       assertEquals(2L, addedRows.recordCount());
 
       DeletionVectorChangelogExample.ChangelogEvent deletedRows = events.get(1);
-      assertEquals(
-          DeletionVectorChangelogExample.ChangelogEventType.DELETED_ROWS_BY_DV,
-          deletedRows.type());
+      assertEquals(ChangelogOperation.DELETE, deletedRows.type());
       assertEquals(addedRows.snapshotId(), deletedRows.snapshotId());
       assertEquals(result.originalDataFile().location(), deletedRows.dataFileLocation());
       assertEquals(result.deletionVectorFile().location(), deletedRows.deletionVectorLocation());
@@ -51,9 +50,7 @@ public class DeletionVectorChangelogExampleTest {
       assertEquals(1L, deletedRows.recordCount());
 
       DeletionVectorChangelogExample.ChangelogEvent removedDataFile = events.get(2);
-      assertEquals(
-          DeletionVectorChangelogExample.ChangelogEventType.DELETED_ROWS_BY_REMOVED_DATA_FILE,
-          removedDataFile.type());
+      assertEquals(ChangelogOperation.DELETE, removedDataFile.type());
       assertEquals(result.toSnapshotId(), removedDataFile.snapshotId());
       assertEquals(result.removedDataFile().location(), removedDataFile.dataFileLocation());
       assertEquals(1L, removedDataFile.recordCount());
@@ -109,9 +106,7 @@ public class DeletionVectorChangelogExampleTest {
         DeletionVectorChangelogExample.DvOnlyChangelogPlanner.removedDataFileEvent(
             12L, dataFile, deletionVector);
 
-    assertEquals(
-        DeletionVectorChangelogExample.ChangelogEventType.DELETED_ROWS_BY_REMOVED_DATA_FILE,
-        event.type());
+    assertEquals(ChangelogOperation.DELETE, event.type());
     assertEquals(12L, event.snapshotId());
     assertEquals(dataFile.location(), event.dataFileLocation());
     assertEquals(2L, event.recordCount());
