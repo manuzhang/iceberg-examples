@@ -4,6 +4,7 @@ java_library(
     name = "core_lib",
     srcs = [
         "src/main/java/io/github/manuzhang/iceberg/examples/DataOperationsExample.java",
+        "src/main/java/io/github/manuzhang/iceberg/examples/DeletionVectorChangelogExample.java",
         "src/main/java/io/github/manuzhang/iceberg/examples/IcebergExamples.java",
         "src/main/java/io/github/manuzhang/iceberg/examples/RowLevelUpsertExample.java",
         "src/main/java/io/github/manuzhang/iceberg/examples/SchemaEvolutionExample.java",
@@ -88,6 +89,12 @@ java_binary(
 )
 
 java_binary(
+    name = "deletion_vector_changelog_example",
+    main_class = "io.github.manuzhang.iceberg.examples.DeletionVectorChangelogExample",
+    runtime_deps = [":core_lib"],
+)
+
+java_binary(
     name = "beam_iceberg_example",
     main_class = "io.github.manuzhang.iceberg.examples.BeamIcebergExample",
     runtime_deps = [
@@ -154,6 +161,21 @@ java_test(
         "@maven//:org_apache_iceberg_iceberg_api",
         "@maven//:org_apache_iceberg_iceberg_core",
         "@maven//:org_apache_iceberg_iceberg_core_tests",
+        "@maven//:org_apache_iceberg_iceberg_data",
+    ],
+)
+
+java_test(
+    name = "deletion_vector_changelog_example_test",
+    srcs = [
+        "src/test/java/io/github/manuzhang/iceberg/examples/DeletionVectorChangelogExampleTest.java",
+    ],
+    test_class = "io.github.manuzhang.iceberg.examples.DeletionVectorChangelogExampleTest",
+    deps = [
+        ":core_lib",
+        "@maven//:junit_junit",
+        "@maven//:org_apache_iceberg_iceberg_api",
+        "@maven//:org_apache_iceberg_iceberg_core",
         "@maven//:org_apache_iceberg_iceberg_data",
     ],
 )
